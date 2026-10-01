@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scanner Barcode Meja - CafeBar</title>
+<title>Scanner QR Meja - CafeBar</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -12,8 +12,8 @@
 <nav class="bg-[#141414] border-b border-white/10 sticky top-0 z-40">
   <div class="max-w-3xl mx-auto px-4 h-[60px] flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div class="w-9 h-9 bg-amber-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-barcode"></i></div>
-      <div class="leading-none"><h1 class="font-bold text-sm">Scan Barcode Meja</h1><p class="text-xs text-white/50">Arahkan kamera ke barcode / QR di meja</p></div>
+      <div class="w-9 h-9 bg-amber-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-qrcode"></i></div>
+      <div class="leading-none"><h1 class="font-bold text-sm">Scan QR Meja</h1><p class="text-xs text-white/50">Arahkan kamera ke QR di meja</p></div>
     </div>
     <a href="index.html" class="px-3.5 py-2 bg-white text-slate-900 rounded-full text-xs font-bold">Generator</a>
   </div>
@@ -21,7 +21,7 @@
 
 <div class="flex-1 max-w-3xl mx-auto w-full px-4 py-5 flex flex-col gap-4">
   <div class="bg-blue-600 rounded-2xl p-3 flex gap-2 items-center text-white text-xs">
-    <i class="fa-solid fa-lightbulb"></i> <b>Petunjuk:</b> Arahkan kotak kamera ke barcode hitam di meja, tahan 1 detik sampai bunyi — otomatis buka menu.
+    <i class="fa-solid fa-lightbulb"></i> <b>Petunjuk:</b> Arahkan kotak kamera ke QR di meja, tahan 1 detik sampai bunyi — otomatis buka menu.
   </div>
   <div class="bg-[#1a1a1a] rounded-[24px] p-4 border border-white/10">
     <div class="flex items-center justify-between mb-3">
@@ -33,7 +33,7 @@
       <button onclick="switchCamera()" class="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Ganti Kamera</button>
       <button onclick="toggleTorch()" id="torchBtn" class="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold"><i class="fa-solid fa-lightbulb mr-1"></i> Torch</button>
     </div>
-    <p class="text-[11px] text-white/40 text-center mt-2">Support: CODE128 • EAN13 • QR Code</p>
+    <p class="text-[11px] text-white/40 text-center mt-2">Scan QR • otomatis buka menu</p>
   </div>
 
   <div class="bg-white text-slate-900 rounded-[24px] p-5 shadow-sm">
@@ -50,14 +50,14 @@
       <button onclick="quickMeja(10)" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold">10</button>
     </div>
     <div id="resultBox" class="hidden mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
-      <p class="text-sm font-black text-emerald-700 flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Barcode Terdeteksi!</p>
+      <p class="text-sm font-black text-emerald-700 flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> QR Terdeteksi!</p>
       <p id="resultText" class="text-xs break-all mt-2 font-mono bg-white p-2.5 rounded-xl border"></p>
       <p id="resultMeja" class="text-sm font-bold mt-2"></p>
       <a id="resultLink" href="#" class="mt-3 block w-full text-center py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold">Buka Menu Meja <i class="fa-solid fa-arrow-right ml-1"></i></a>
       <button onclick="continueScan()" class="w-full mt-2 py-2 bg-white border rounded-xl text-xs font-semibold">Scan Lagi</button>
     </div>
     <div class="mt-4 bg-amber-50 border border-amber-100 rounded-xl p-3">
-      <p class="text-xs font-bold text-amber-800">Tips</p><p class="text-xs text-amber-700/80 leading-relaxed">Jarak 10–20cm, cahaya cukup, barcode CODE128 tercetak jelas. Jika gagal, pakai Input Manual.</p>
+      <p class="text-xs font-bold text-amber-800">Tips</p><p class="text-xs text-amber-700/80 leading-relaxed">Jarak 10–20cm, cahaya cukup, QR tercetak jelas. Jika gagal, pakai Input Manual.</p>
     </div>
   </div>
 

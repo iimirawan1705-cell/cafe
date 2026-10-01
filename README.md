@@ -1,14 +1,14 @@
 # cafe
 
-Aplikasi orderan cafe — pelanggan scan QR/barcode di meja, langsung buka menu dan pesan. Admin, dapur, dan history update realtime.
+Aplikasi orderan cafe — pelanggan scan QR di meja, langsung buka menu dan pesan. Admin, dapur, dan history update realtime.
 
 ## Halaman
 
-- `index.html` — generator barcode/QR per meja
+- `index.html` — generator QR per meja
 - `menu.html?meja=1` — menu pelanggan
 - `admin.html` — kelola order + menu
 - `kitchen.html` — tampilan dapur
-- `scanner.html` — scan barcode meja
+- `scanner.html` — scan QR meja
 - `history.html` — pesanan selesai
 - `barcode-permeja.html?meja=1` — kartu 1 meja siap cetak
 

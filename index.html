@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CafeBar - Barcode Meja Generator</title>
+<title>CafeBar - QR Meja Generator</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 @media print {
@@ -25,10 +24,10 @@
 <nav class="bg-white/95 backdrop-blur border-b sticky top-0 z-50">
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between gap-4">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center text-white shadow-sm"><i class="fa-solid fa-barcode"></i></div>
+      <div class="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center text-white shadow-sm"><i class="fa-solid fa-qrcode"></i></div>
       <div class="leading-none">
         <h1 class="font-bold text-[17px] tracking-tight">CafeBar</h1>
-        <p class="text-[11px] text-slate-500 font-medium">Barcode Order System</p>
+        <p class="text-[11px] text-slate-500 font-medium">QR Order System</p>
       </div>
       <span class="hidden lg:inline-flex items-center gap-1.5 ml-3 text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Ready to Print</span>
     </div>
@@ -49,7 +48,7 @@
     <div class="bg-white rounded-[20px] border shadow-sm overflow-hidden">
       <div class="px-5 pt-5 pb-3">
         <h2 class="font-bold text-[15px] flex items-center gap-2"><span class="w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs"><i class="fa-solid fa-gear"></i></span> Pengaturan</h2>
-        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Generate barcode per meja. Tempel di meja, pelanggan scan untuk order.</p>
+        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Generate QR per meja. Tempel di meja, pelanggan scan untuk order.</p>
       </div>
       <div class="px-5 pb-5 space-y-3">
         <div>
@@ -79,18 +78,7 @@
         </div>
         <div class="pt-1">
           <label class="text-xs font-semibold text-slate-700">Mode Cetak</label>
-          <div class="grid grid-cols-3 gap-2 mt-1.5">
-            <button onclick="setMode('barcode')" id="btnBarcode" class="py-2.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm"><i class="fa-solid fa-barcode block mb-0.5"></i>Barcode</button>
-            <button onclick="setMode('qr')" id="btnQR" class="py-2.5 rounded-xl text-xs font-bold bg-white border text-slate-700 hover:bg-slate-50">QR Code</button>
-            <button onclick="setMode('combo')" id="btnCombo" class="py-2.5 rounded-xl text-xs font-bold bg-white border text-slate-700 hover:bg-slate-50">Combo</button>
-          </div>
-        </div>
-        <div>
-          <label class="text-xs font-semibold text-slate-700">Isi Barcode</label>
-          <select id="barcodeMode" class="w-full mt-1.5 px-3 py-2.5 border rounded-xl text-sm bg-white">
-            <option value="url">Full URL — scan langsung buka menu</option>
-            <option value="short">Kode Pendek (MEJA-X) — POS</option>
-          </select>
+          <div class="mt-1.5 py-2.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm text-center"><i class="fa-solid fa-qrcode mr-1"></i>QR Code — scan langsung buka menu</div>
         </div>
         <button onclick="generateAll()" class="w-full mt-2 bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-bold text-sm shadow-sm transition"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Generate Semua Meja</button>
         <div class="grid grid-cols-2 gap-2">
@@ -103,10 +91,10 @@
         <div class="mt-2 space-y-2">
           <div class="flex gap-2 items-center text-xs text-amber-900 bg-white rounded-xl p-2 border"><span class="w-6 h-6 bg-amber-600 text-white rounded-full flex items-center justify-center font-black text-xs shrink-0">1</span> Atur jumlah meja → klik Generate</div>
           <div class="flex gap-2 items-center text-xs text-amber-900 bg-white rounded-xl p-2 border"><span class="w-6 h-6 bg-slate-900 text-white rounded-full flex items-center justify-center font-black text-xs shrink-0">2</span> Klik Cetak → gunting & tempel di meja</div>
-          <div class="flex gap-2 items-center text-xs text-amber-900 bg-white rounded-xl p-2 border"><span class="w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center font-black text-xs shrink-0">3</span> Pelanggan scan barcode → pesan langsung jadi</div>
+          <div class="flex gap-2 items-center text-xs text-amber-900 bg-white rounded-xl p-2 border"><span class="w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center font-black text-xs shrink-0">3</span> Pelanggan scan QR → pesan langsung jadi</div>
         </div>
         <p class="text-[11px] text-amber-700/70 mt-2 text-center">Tidak perlu aplikasi — cukup kamera HP</p>
-        <a href="scanner.html" class="mt-3 flex items-center justify-center gap-1.5 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-camera"></i> Scan Barcode Meja</a>
+        <a href="scanner.html" class="mt-3 flex items-center justify-center gap-1.5 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-camera"></i> Scan QR Meja</a>
       </div>
     </div>
     <!-- Statistik -->
@@ -128,10 +116,10 @@
   <!-- Right Grid -->
   <section class="col-span-12 lg:col-span-8 xl:col-span-9">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4 no-print">
-      <h2 class="font-bold text-[16px]">Barcode Per Meja <span id="countLabel" class="ml-2 text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-full">12 meja</span></h2>
+      <h2 class="font-bold text-[16px]">QR Per Meja <span id="countLabel" class="ml-2 text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-full">12 meja</span></h2>
       <div class="flex items-center gap-2">
-        <span class="hidden sm:inline-flex text-[11px] font-semibold bg-white border px-2.5 py-1 rounded-full">CODE128 • High</span>
-        <span id="modeLabel" class="text-[11px] font-black bg-slate-900 text-white px-3 py-1.5 rounded-full tracking-wide">BARCODE</span>
+        <span class="hidden sm:inline-flex text-[11px] font-semibold bg-white border px-2.5 py-1 rounded-full">QR • High</span>
+        <span class="text-[11px] font-black bg-slate-900 text-white px-3 py-1.5 rounded-full tracking-wide">QR CODE</span>
       </div>
     </div>
     <div id="print-area">
@@ -168,17 +156,8 @@ function useLanIp(ip){
   document.getElementById('baseUrl').addEventListener('input', ()=>{ checkBaseWarn(); });
   checkBaseWarn();
 })();
-let currentMode='barcode';
-function setMode(m){
-  currentMode=m;
-  const clsActive='py-2.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm';
-  const clsIdle='py-2.5 rounded-xl text-xs font-bold bg-white border text-slate-700 hover:bg-slate-50';
-  document.getElementById('btnBarcode').className = m==='barcode'?clsActive:clsIdle;
-  document.getElementById('btnQR').className = m==='qr'?clsActive:clsIdle;
-  document.getElementById('btnCombo').className = m==='combo'?clsActive:clsIdle;
-  document.getElementById('modeLabel').textContent = m==='barcode'?'BARCODE':m==='qr'?'QR CODE':'COMBO';
-  generateAll();
-}
+// QR saja — mode Barcode & Combo dihapus.
+function setMode(){ generateAll(); }
 function refreshStats(){
   const orders=JSON.parse(localStorage.getItem('cafe_orders')||'[]');
   document.getElementById('statOrder').textContent=orders.length;
@@ -191,32 +170,26 @@ function generateAll(){
   const prefix=(document.getElementById('prefix').value||'MEJA').toUpperCase();
   const cafe=document.getElementById('cafeName').value||'Cafe';
   const base=(document.getElementById('baseUrl').value||'').trim().replace(/\/$/,'');
-  const bMode=document.getElementById('barcodeMode').value;
   checkBaseWarn();
   const grid=document.getElementById('qrGrid');
   grid.innerHTML='';
-  document.getElementById('countLabel').textContent=n+' meja • '+currentMode.toUpperCase();
+  document.getElementById('countLabel').textContent=n+' meja • QR CODE';
   localStorage.setItem('cafe_name',cafe);
   localStorage.setItem('cafe_prefix',prefix);
   for(let i=1;i<=n;i++){
     const url=`${base}?meja=${i}`;
-    const barcodeValue=bMode==='url'?url:`${prefix}-${i}`;
     const card=document.createElement('div');
     card.className='print-card bg-white rounded-[18px] border shadow-sm flex flex-col overflow-hidden';
-    let visual='';
-    if(currentMode==='barcode') visual=`<svg id="barcode-${i}" class="w-full max-w-[240px] mx-auto"></svg>`;
-    else if(currentMode==='qr') visual=`<div id="qrcode-${i}" class="flex justify-center p-2 bg-white"></div>`;
-    else visual=`<div id="qrcode-${i}" class="flex justify-center p-1"></div><svg id="barcode-${i}" class="w-full max-w-[240px] mx-auto mt-2"></svg>`;
     card.innerHTML=`
       <div class="px-4 pt-3.5 flex items-center justify-between">
         <span class="text-[11px] font-black tracking-wide bg-amber-600 text-white px-2.5 py-1 rounded-full">${prefix} ${i}</span>
         <span class="text-[11px] font-medium text-slate-500 truncate max-w-[140px]">${cafe}</span>
       </div>
       <div class="px-4 py-3 flex-1 flex flex-col items-center justify-center">
-        ${visual}
+        <div id="qrcode-${i}" class="flex justify-center p-2 bg-white"></div>
         <h3 class="font-black text-sm mt-3 tracking-tight">${prefix} ${i}</h3>
-        <p class="text-[10px] font-mono text-slate-500 break-all text-center leading-tight mt-1 px-2">${barcodeValue}</p>
-        <p class="text-[10px] text-slate-400 mt-1.5">Scan untuk pesan • Tanpa antri kasir</p>
+        <p class="text-[10px] font-mono text-slate-500 break-all text-center leading-tight mt-1 px-2">${url}</p>
+        <p class="text-[10px] text-slate-400 mt-1.5">Scan QR untuk pesan • Tanpa antri kasir</p>
       </div>
       <div class="cut-line mx-4"></div>
       <div class="p-3 bg-slate-50/50">
@@ -230,31 +203,14 @@ function generateAll(){
     `;
     grid.appendChild(card);
     setTimeout(()=>{
-      if(currentMode==='barcode'||currentMode==='combo'){
-        try{ JsBarcode(`#barcode-${i}`, barcodeValue, {format:"CODE128", width:1.35, height:58, displayValue:true, fontSize:10, margin:6, background:"#ffffff", lineColor:"#0f172a"});}catch(e){}
-      }
-      if(currentMode==='qr'||currentMode==='combo'){
-        const el=document.getElementById(`qrcode-${i}`);
-        if(el){ el.innerHTML=''; new QRCode(el,{text:url,width:currentMode==='combo'?92:132,height:currentMode==='combo'?92:132,colorDark:"#0f172a",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});}
-      }
+      const el=document.getElementById(`qrcode-${i}`);
+      if(el){ el.innerHTML=''; new QRCode(el,{text:url,width:132,height:132,colorDark:"#0f172a",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});}
     },30);
   }
 }
 function downloadCard(i){
-  const svg=document.querySelector(`#barcode-${i}`);
-  if(svg && currentMode!=='qr'){
-    const xml=new XMLSerializer().serializeToString(svg);
-    const svg64=btoa(unescape(encodeURIComponent(xml)));
-    const img=new Image();
-    img.onload=()=>{
-      const c=document.createElement('canvas'); const s=2; c.width=img.width*s; c.height=img.height*s;
-      const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
-      const a=document.createElement('a'); a.download=`Barcode-${document.getElementById('prefix').value}-${i}.png`; a.href=c.toDataURL('image/png'); a.click();
-    }; img.src='data:image/svg+xml;base64,'+svg64;
-  } else {
-    const canvas=document.querySelector(`#qrcode-${i} canvas`); if(!canvas) return alert('Belum siap');
-    const a=document.createElement('a'); a.download=`QR-${document.getElementById('prefix').value}-${i}.png`; a.href=canvas.toDataURL(); a.click();
-  }
+  const canvas=document.querySelector(`#qrcode-${i} canvas`); if(!canvas) return alert('Belum siap');
+  const a=document.createElement('a'); a.download=`QR-${document.getElementById('prefix').value}-${i}.png`; a.href=canvas.toDataURL(); a.click();
 }
 function printSingle(i){
   const cards=document.getElementById('qrGrid').children;

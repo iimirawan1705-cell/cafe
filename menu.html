@@ -18,12 +18,12 @@
       <div class="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center text-white shadow-sm"><i class="fa-solid fa-utensils"></i></div>
       <div class="leading-none">
         <h1 id="cafeTitle" class="font-bold text-[16px] tracking-tight">Kopi Senja Cafe</h1>
-        <p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-chair text-amber-600 text-[11px]"></i> Kamu di <span id="tableBadge" class="font-black text-amber-700">MEJA 1</span><span class="hidden sm:inline"> • Scan barcode di meja</span></p>
+        <p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-chair text-amber-600 text-[11px]"></i> Kamu di <span id="tableBadge" class="font-black text-amber-700">MEJA 1</span><span class="hidden sm:inline"> • Scan QR di meja</span></p>
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <a href="scanner.html" class="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-black"><i class="fa-solid fa-barcode"></i> Scan</a>
-      <button onclick="openScanModal()" class="md:hidden w-9 h-9 bg-slate-900 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-barcode text-sm"></i></button>
+      <a href="scanner.html" class="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-black"><i class="fa-solid fa-qrcode"></i> Scan</a>
+      <button onclick="openScanModal()" class="md:hidden w-9 h-9 bg-slate-900 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-qrcode text-sm"></i></button>
       <a href="index.html" class="hidden sm:flex w-9 h-9 bg-slate-100 border rounded-full items-center justify-center"><i class="fa-solid fa-qrcode text-sm"></i></a>
       <button onclick="document.getElementById('cartDrawer').classList.remove('translate-y-full')" class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-full text-sm font-bold shadow-sm">
         <i class="fa-solid fa-bag-shopping"></i><span id="cartCount">0</span><span class="opacity-60">•</span><span id="cartTotal">Rp 0</span>
@@ -57,7 +57,7 @@
 <div class="max-w-6xl mx-auto px-4 mt-3">
   <div class="bg-amber-600 rounded-2xl p-3 flex items-center gap-2 text-white text-xs overflow-auto">
     <span class="bg-white text-amber-700 font-black px-2.5 py-1 rounded-full shrink-0">LANGKAH</span>
-    <span class="flex items-center gap-1.5 shrink-0"><span class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center font-bold">1</span> Scan barcode di meja</span>
+    <span class="flex items-center gap-1.5 shrink-0"><span class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center font-bold">1</span> Scan QR di meja</span>
     <span class="opacity-50">→</span>
     <span class="flex items-center gap-1.5 shrink-0"><span class="w-6 h-6 bg-white text-amber-700 rounded-full flex items-center justify-center font-bold">2</span> Pilih menu & Tambah</span>
     <span class="opacity-50">→</span>
@@ -100,9 +100,9 @@
     </div>
 
     <div id="noTableAlert" class="hidden bg-white rounded-[20px] border-2 border-dashed border-amber-200 p-5 text-center">
-      <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto"><i class="fa-solid fa-barcode"></i></div>
-      <p class="text-sm font-bold mt-2">Belum scan barcode meja</p>
-      <p class="text-xs text-slate-500 mt-1">Scan barcode yang ada di meja kamu</p>
+      <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto"><i class="fa-solid fa-qrcode"></i></div>
+      <p class="text-sm font-bold mt-2">Belum scan QR meja</p>
+      <p class="text-xs text-slate-500 mt-1">Scan QR yang ada di meja kamu</p>
       <div class="grid grid-cols-2 gap-2 mt-4">
         <a href="scanner.html" class="py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold text-center"><i class="fa-solid fa-camera mr-1"></i> Scan</a>
         <button onclick="openScanModal()" class="py-2.5 bg-white border rounded-xl text-xs font-bold">Scan di sini</button>
@@ -155,12 +155,12 @@
   <div class="absolute inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center p-0 md:p-4">
     <div class="bg-slate-900 rounded-t-[28px] md:rounded-[28px] w-full max-w-lg overflow-hidden border border-white/10 shadow-2xl">
       <div class="px-5 py-4 flex items-center justify-between border-b border-white/10">
-        <h3 class="font-bold text-white flex items-center gap-2"><span class="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-barcode"></i></span> Scan Barcode Meja</h3>
+        <h3 class="font-bold text-white flex items-center gap-2"><span class="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-qrcode"></i></span> Scan QR Meja</h3>
         <button onclick="closeScanModal()" class="w-9 h-9 bg-white/10 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="p-5">
         <div id="inlineReader" class="rounded-2xl overflow-hidden bg-black min-h-[260px]"></div>
-        <p class="text-xs text-slate-400 text-center mt-2">Arahkan ke barcode CODE128 / QR di meja</p>
+        <p class="text-xs text-slate-400 text-center mt-2">Arahkan ke QR di meja</p>
         <div class="flex gap-2 mt-3">
           <input id="inlineManual" placeholder="MEJA-5 atau angka" class="flex-1 px-3.5 py-3 bg-white rounded-xl text-sm font-bold text-center">
           <button onclick="inlineManualGo()" class="px-6 bg-amber-600 text-white rounded-xl font-bold text-sm">OK</button>
@@ -216,7 +216,7 @@
       <button onclick="document.getElementById('helpModal').classList.add('hidden')" class="w-9 h-9 bg-slate-100 rounded-full"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="space-y-3 mt-4">
-      <div class="flex gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4"><span class="w-10 h-10 bg-amber-600 text-white rounded-xl flex items-center justify-center font-black shrink-0">1</span><div><p class="font-bold text-sm">Scan barcode di meja</p><p class="text-xs text-slate-600">Arahkan kamera HP ke barcode hitam-putih di meja. Atau ketik nomor meja manual.</p></div></div>
+      <div class="flex gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4"><span class="w-10 h-10 bg-amber-600 text-white rounded-xl flex items-center justify-center font-black shrink-0">1</span><div><p class="font-bold text-sm">Scan QR di meja</p><p class="text-xs text-slate-600">Arahkan kamera HP ke QR di meja. Atau ketik nomor meja manual.</p></div></div>
       <div class="flex gap-3 bg-slate-50 border rounded-2xl p-4"><span class="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black shrink-0">2</span><div><p class="font-bold text-sm">Pilih menu & klik Tambah</p><p class="text-xs text-slate-600">Klik <b>Tambah</b> di foto menu. Angka kecil = jumlah di keranjang. Cek keranjang di pojok kanan atas.</p></div></div>
       <div class="flex gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl p-4"><span class="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-black shrink-0">3</span><div><p class="font-bold text-sm">Pilih bayar & Pesan</p><p class="text-xs text-slate-600">Pilih <b>Bayar di Kasir / QRIS / Transfer / E-Wallet</b> → klik <b>Pesan Sekarang</b>. Pesanan masuk ke dapur, tunggu di meja.</p></div></div>
     </div>
@@ -344,7 +344,7 @@ document.getElementById('customerNameDrawer')?.addEventListener('input', syncCus
 })();
 let pendingOrder=null;
 function placeOrder(){
-  if(!tableNo) return alert('Scan barcode meja dulu');
+  if(!tableNo) return alert('Scan QR meja dulu');
   if(!cart.length) return alert('Keranjang kosong');
   const drawerName=document.getElementById('customerNameDrawer')?.value.trim();
   const sideName=document.getElementById('customerName')?.value.trim();
