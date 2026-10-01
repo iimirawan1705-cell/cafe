@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu - CafeBar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>.scrollbar-none::-webkit-scrollbar{display:none}.scrollbar-none{scrollbar-width:none}</style>
+</head>
+<body class="bg-[#fcfaf7] pb-28 antialiased">
+<!-- Header -->
+<div class="bg-white/95 backdrop-blur sticky top-0 z-40 border-b">
+  <div class="max-w-6xl mx-auto px-4 h-[64px] flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center text-white shadow-sm"><i class="fa-solid fa-utensils"></i></div>
+      <div class="leading-none">
+        <h1 id="cafeTitle" class="font-bold text-[16px] tracking-tight">Kopi Senja Cafe</h1>
+        <p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-chair text-amber-600 text-[11px]"></i> Kamu di <span id="tableBadge" class="font-black text-amber-700">MEJA 1</span><span class="hidden sm:inline"> • Scan barcode di meja</span></p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="scanner.html" class="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-black"><i class="fa-solid fa-barcode"></i> Scan</a>
+      <button onclick="openScanModal()" class="md:hidden w-9 h-9 bg-slate-900 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-barcode text-sm"></i></button>
+      <a href="index.html" class="hidden sm:flex w-9 h-9 bg-slate-100 border rounded-full items-center justify-center"><i class="fa-solid fa-qrcode text-sm"></i></a>
+      <button onclick="document.getElementById('cartDrawer').classList.remove('translate-y-full')" class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-full text-sm font-bold shadow-sm">
+        <i class="fa-solid fa-bag-shopping"></i><span id="cartCount">0</span><span class="opacity-60">•</span><span id="cartTotal">Rp 0</span>
+      </button>
+    </div>
+  </div>
+  <!-- Category -->
+  <div class="max-w-6xl mx-auto px-4 pb-3 flex items-center gap-2 overflow-auto scrollbar-none">
+    <div class="flex gap-2">
+      <button data-cat="all" class="cat-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold bg-slate-900 text-white">Semua</button>
+      <button data-cat="kopi" class="cat-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold bg-white border">Kopi</button>
+      <button data-cat="nonkopi" class="cat-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold bg-white border">Non-Kopi</button>
+      <button data-cat="makanan" class="cat-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold bg-white border">Makanan</button>
+      <button data-cat="snack" class="cat-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold bg-white border">Snack</button>
+    </div>
+    <div class="ml-auto hidden sm:flex items-center gap-2">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+        <input id="search" placeholder="Cari menu..." class="pl-8 pr-4 py-2 border rounded-full text-sm w-56 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none">
+      </div>
+    </div>
+  </div>
+  <div class="sm:hidden max-w-6xl mx-auto px-4 pb-3">
+    <div class="relative">
+      <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+      <input id="searchMobile" placeholder="Cari menu..." class="w-full pl-8 pr-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+    </div>
+  </div>
+</div>
+
+<div class="max-w-6xl mx-auto px-4 mt-3">
+  <div class="bg-amber-600 rounded-2xl p-3 flex items-center gap-2 text-white text-xs overflow-auto">
+    <span class="bg-white text-amber-700 font-black px-2.5 py-1 rounded-full shrink-0">LANGKAH</span>
+    <span class="flex items-center gap-1.5 shrink-0"><span class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center font-bold">1</span> Scan barcode di meja</span>
+    <span class="opacity-50">→</span>
+    <span class="flex items-center gap-1.5 shrink-0"><span class="w-6 h-6 bg-white text-amber-700 rounded-full flex items-center justify-center font-bold">2</span> Pilih menu & Tambah</span>
+    <span class="opacity-50">→</span>
+    <span class="flex items-center gap-1.5 shrink-0"><span class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center font-bold">3</span> Bayar & tunggu di meja</span>
+    <button onclick="document.getElementById('helpModal').classList.remove('hidden')" class="ml-auto hidden sm:inline-flex bg-white text-amber-700 px-3 py-1 rounded-full font-bold shrink-0"><i class="fa-solid fa-circle-question"></i> Bantuan</button>
+  </div>
+</div>
+
+<div class="max-w-6xl mx-auto px-4 mt-5 grid grid-cols-12 gap-6">
+  <!-- Menu Grid -->
+  <div class="col-span-12 lg:col-span-8">
+    <div class="flex items-center justify-between mb-3 gap-2">
+      <h2 class="font-bold text-sm">Daftar Menu — Klik <span class="bg-slate-900 text-white px-2 py-0.5 rounded-full text-xs">Tambah</span> untuk pesan</h2>
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="text-xs text-slate-500 hidden sm:inline" id="menuCount"></span>
+        <button onclick="openAddMenuModal()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-full text-xs font-bold"><i class="fa-solid fa-plus"></i> Menu Baru</button>
+        <a href="admin.html" class="hidden sm:inline px-2 py-1.5 bg-white border rounded-full text-xs font-bold" title="Kelola di Admin"><i class="fa-solid fa-gear"></i></a>
+      </div>
+    </div>
+    <div id="menuGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+    <p class="text-xs text-slate-400 text-center mt-4"><i class="fa-solid fa-lightbulb text-amber-500"></i> Tip: Klik angka di pojok kanan atas foto untuk tambah/kurang • Butuh menu baru? Klik <b>Menu Baru</b></p>
+  </div>
+
+  <!-- Side -->
+  <div class="col-span-12 lg:col-span-4 space-y-4">
+    <div class="bg-white rounded-[20px] border shadow-sm p-5">
+      <h3 class="font-bold text-sm flex items-center gap-2"><span class="w-7 h-7 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-user"></i></span> Nama Pemesan</h3>
+      <p class="text-xs text-slate-500 mt-1">Nama kamu akan tampil di keranjang & struk</p>
+      <input id="customerName" placeholder="Contoh: Budi" class="w-full mt-2 px-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+      <p class="text-[11px] text-slate-400 mt-1.5">Bisa isi di sini atau nanti di keranjang sebelum Pesan</p>
+      <div class="mt-3 bg-slate-50 border rounded-xl p-3 flex gap-2">
+        <i class="fa-solid fa-circle-info text-slate-400 mt-0.5"></i>
+        <p class="text-xs text-slate-600 leading-relaxed"><b>Tidak perlu ke kasir.</b> Setelah klik Pesan, tunggu di meja — pelayan antar & bayar sesuai metode yang kamu pilih.</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-[20px] border shadow-sm p-5">
+      <h3 class="font-bold text-sm flex items-center justify-between">Pesanan Saya <span class="tableLabel text-xs bg-slate-900 text-white px-2 py-1 rounded-full">Meja 1</span></h3>
+      <div id="myOrders" class="mt-3 space-y-2"></div>
+    </div>
+
+    <div id="noTableAlert" class="hidden bg-white rounded-[20px] border-2 border-dashed border-amber-200 p-5 text-center">
+      <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto"><i class="fa-solid fa-barcode"></i></div>
+      <p class="text-sm font-bold mt-2">Belum scan barcode meja</p>
+      <p class="text-xs text-slate-500 mt-1">Scan barcode yang ada di meja kamu</p>
+      <div class="grid grid-cols-2 gap-2 mt-4">
+        <a href="scanner.html" class="py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold text-center"><i class="fa-solid fa-camera mr-1"></i> Scan</a>
+        <button onclick="openScanModal()" class="py-2.5 bg-white border rounded-xl text-xs font-bold">Scan di sini</button>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <input id="manualTable" type="number" min="1" placeholder="No meja" class="flex-1 px-3 py-2.5 border rounded-xl text-sm text-center font-bold">
+        <button onclick="setManualTable()" class="px-5 bg-amber-600 text-white rounded-xl text-sm font-bold">OK</button>
+      </div>
+    </div>
+    <button id="changeTableBtn" onclick="clearTable()" class="hidden w-full py-2.5 bg-white border rounded-xl text-xs font-semibold"><i class="fa-solid fa-repeat mr-1"></i> Ganti / Scan Ulang Meja</button>
+  </div>
+</div>
+
+<!-- Cart Drawer -->
+<div id="cartDrawer" class="fixed inset-0 z-50 flex flex-col justify-end translate-y-full transition duration-300">
+  <div onclick="this.parentElement.classList.add('translate-y-full')" class="flex-1 bg-black/40 backdrop-blur-sm"></div>
+  <div class="bg-white rounded-t-[28px] max-h-[86vh] flex flex-col max-w-6xl mx-auto w-full shadow-2xl">
+    <div class="px-5 py-4 border-b flex items-center justify-between">
+      <h2 class="font-bold">Keranjang <span class="text-slate-500 font-normal">•</span> <span class="tableLabel">Meja 1</span></h2>
+      <button onclick="document.getElementById('cartDrawer').classList.add('translate-y-full')" class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="cartItems" class="flex-1 overflow-auto p-4 space-y-3"></div>
+    <div class="p-5 border-t bg-slate-50 rounded-t-[20px]">
+      <div class="flex justify-between font-black text-base"><span>Total</span><span id="total">Rp 0</span></div>
+      <label class="text-xs font-bold mt-4 block flex items-center gap-1.5"><i class="fa-solid fa-credit-card text-amber-600"></i> Metode Pembayaran</label>
+      <div class="grid grid-cols-2 gap-2 mt-2" id="payOptions">
+        <button onclick="selectPay('cash')" data-pay="cash" class="pay-btn py-2.5 bg-slate-900 text-white border-2 border-slate-900 rounded-xl text-xs font-bold flex flex-col items-center gap-1"><i class="fa-solid fa-money-bill-wave"></i> Bayar di Kasir<span class="text-[10px] opacity-70">Tunai</span></button>
+        <button onclick="selectPay('qris')" data-pay="qris" class="pay-btn py-2.5 bg-white border rounded-xl text-xs font-bold flex flex-col items-center gap-1 text-slate-700"><i class="fa-solid fa-qrcode"></i> QRIS<span class="text-[10px] text-slate-500">Scan QR</span></button>
+        <button onclick="selectPay('transfer')" data-pay="transfer" class="pay-btn py-2.5 bg-white border rounded-xl text-xs font-bold flex flex-col items-center gap-1 text-slate-700"><i class="fa-solid fa-building-columns"></i> Transfer<span class="text-[10px] text-slate-500">Bank</span></button>
+        <button onclick="selectPay('ewallet')" data-pay="ewallet" class="pay-btn py-2.5 bg-white border rounded-xl text-xs font-bold flex flex-col items-center gap-1 text-slate-700"><i class="fa-solid fa-wallet"></i> E-Wallet<span class="text-[10px] text-slate-500">GoPay/DANA/OVO</span></button>
+      </div>
+      <p id="payHint" class="text-[11px] text-slate-500 mt-2 text-center">Bayar tunai di kasir setelah makan</p>
+      <label class="text-xs font-bold mt-3 block flex items-center gap-1.5"><i class="fa-solid fa-user text-amber-600"></i> Nama Kamu <span class="text-red-500">*</span> <span class="font-normal text-slate-500">(biar pelayan tahu pesanan siapa)</span></label>
+      <input id="customerNameDrawer" placeholder="Contoh: Budi" class="w-full mt-1.5 px-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+      <p class="text-[11px] text-slate-400 mt-1">Nama akan tampil di admin & dapur sebagai <span class="tableLabel">Meja 1</span> • Nama</p>
+      <label class="text-xs font-bold mt-3 block">Catatan untuk dapur</label>
+      <textarea id="note" rows="2" placeholder="Contoh: Kopi less sugar, tanpa es..." class="w-full mt-1.5 px-3 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none"></textarea>
+      <div class="grid grid-cols-2 gap-2 mt-3">
+        <button onclick="clearCart()" class="py-3 bg-white border rounded-xl text-sm font-semibold">Kosongkan</button>
+        <button onclick="placeOrder()" class="py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm"><i class="fa-solid fa-paper-plane mr-1"></i> Pesan Sekarang</button>
+      </div>
+      <p class="text-[11px] text-center text-slate-500 mt-2">Order langsung masuk ke dapur & admin</p>
+    </div>
+  </div>
+</div>
+
+<!-- Scan Modal -->
+<div id="scanModal" class="fixed inset-0 z-[60] hidden">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeScanModal()"></div>
+  <div class="absolute inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center p-0 md:p-4">
+    <div class="bg-slate-900 rounded-t-[28px] md:rounded-[28px] w-full max-w-lg overflow-hidden border border-white/10 shadow-2xl">
+      <div class="px-5 py-4 flex items-center justify-between border-b border-white/10">
+        <h3 class="font-bold text-white flex items-center gap-2"><span class="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-barcode"></i></span> Scan Barcode Meja</h3>
+        <button onclick="closeScanModal()" class="w-9 h-9 bg-white/10 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-5">
+        <div id="inlineReader" class="rounded-2xl overflow-hidden bg-black min-h-[260px]"></div>
+        <p class="text-xs text-slate-400 text-center mt-2">Arahkan ke barcode CODE128 / QR di meja</p>
+        <div class="flex gap-2 mt-3">
+          <input id="inlineManual" placeholder="MEJA-5 atau angka" class="flex-1 px-3.5 py-3 bg-white rounded-xl text-sm font-bold text-center">
+          <button onclick="inlineManualGo()" class="px-6 bg-amber-600 text-white rounded-xl font-bold text-sm">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal - Wajib bayar sebelum dikirim ke dapur -->
+<div id="paymentModal" class="hidden fixed inset-0 z-[70] flex items-end md:items-center justify-center p-0 md:p-4">
+  <div onclick="closePaymentModal()" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-t-[28px] md:rounded-[24px] w-full max-w-lg shadow-2xl max-h-[92vh] flex flex-col overflow-hidden">
+    <div class="px-6 py-4 border-b flex justify-between items-center">
+      <div>
+        <h3 class="font-black flex items-center gap-2"><i class="fa-solid fa-lock text-emerald-600"></i> Selesaikan Pembayaran</h3>
+        <p class="text-xs text-slate-500">Pesanan belum dikirim — bayar dulu baru diproses dapur</p>
+      </div>
+      <button onclick="closePaymentModal()" class="w-9 h-9 bg-slate-100 rounded-full"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="flex-1 overflow-auto p-6 space-y-4">
+      <div class="bg-slate-50 border rounded-2xl p-4">
+        <div class="flex justify-between text-xs text-slate-500"><span>Meja</span><span id="payMeja" class="font-bold text-slate-900">MEJA 1</span></div>
+        <div class="flex justify-between text-xs text-slate-500 mt-1"><span>Pelanggan</span><span id="payCustomer" class="font-bold">-</span></div>
+        <div id="payItems" class="mt-3 space-y-1.5 text-sm"></div>
+        <div class="flex justify-between font-black text-base pt-3 mt-3 border-t"><span>Total Bayar</span><span id="payTotal" class="text-amber-700">Rp 0</span></div>
+        <p class="text-[11px] text-slate-500 text-center mt-1">Metode: <span id="payMethodLabel" class="font-bold">-</span></p>
+      </div>
+      <div id="payInstruction" class="rounded-2xl p-4 border"></div>
+      <div id="payQRWrap" class="hidden flex flex-col items-center bg-white border rounded-2xl p-4">
+        <div id="payQR" class="p-2 bg-white border rounded-xl"></div>
+        <p class="text-xs font-bold mt-2" id="payQRText">Scan untuk bayar</p>
+        <p class="text-[11px] text-slate-500">Nominal sesuai total — screenshot jika perlu</p>
+      </div>
+      <label class="flex items-start gap-2 text-xs bg-amber-50 border border-amber-200 rounded-xl p-3">
+        <input type="checkbox" id="payConfirmCheck" class="mt-0.5">
+        <span>Saya sudah melakukan pembayaran sesuai instruksi di atas & siap kirim pesanan ke dapur</span>
+      </label>
+    </div>
+    <div class="p-4 border-t bg-slate-50 flex gap-2">
+      <button onclick="closePaymentModal()" class="flex-1 py-3 bg-white border rounded-xl font-bold text-sm">Batal</button>
+      <button id="btnConfirmPay" onclick="confirmPayment()" class="flex-1 py-3 bg-slate-300 text-white rounded-xl font-bold text-sm" disabled><i class="fa-solid fa-paper-plane"></i> Bayar & Kirim Pesanan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bantuan Modal -->
+<div id="helpModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4">
+  <div onclick="this.parentElement.classList.add('hidden')" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-[24px] max-w-lg w-full p-6 shadow-2xl max-h-[85vh] overflow-auto">
+    <div class="flex justify-between items-start">
+      <h3 class="font-black text-lg">Cara Pesan — Mudah 3 Langkah</h3>
+      <button onclick="document.getElementById('helpModal').classList.add('hidden')" class="w-9 h-9 bg-slate-100 rounded-full"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="space-y-3 mt-4">
+      <div class="flex gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4"><span class="w-10 h-10 bg-amber-600 text-white rounded-xl flex items-center justify-center font-black shrink-0">1</span><div><p class="font-bold text-sm">Scan barcode di meja</p><p class="text-xs text-slate-600">Arahkan kamera HP ke barcode hitam-putih di meja. Atau ketik nomor meja manual.</p></div></div>
+      <div class="flex gap-3 bg-slate-50 border rounded-2xl p-4"><span class="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black shrink-0">2</span><div><p class="font-bold text-sm">Pilih menu & klik Tambah</p><p class="text-xs text-slate-600">Klik <b>Tambah</b> di foto menu. Angka kecil = jumlah di keranjang. Cek keranjang di pojok kanan atas.</p></div></div>
+      <div class="flex gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl p-4"><span class="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-black shrink-0">3</span><div><p class="font-bold text-sm">Pilih bayar & Pesan</p><p class="text-xs text-slate-600">Pilih <b>Bayar di Kasir / QRIS / Transfer / E-Wallet</b> → klik <b>Pesan Sekarang</b>. Pesanan masuk ke dapur, tunggu di meja.</p></div></div>
+    </div>
+    <button onclick="document.getElementById('helpModal').classList.add('hidden')" class="w-full mt-4 py-3 bg-slate-900 text-white rounded-xl font-bold">Mengerti</button>
+    <p class="text-xs text-slate-400 text-center mt-2">Butuh bantuan? Panggil pelayan — tunjukkan nomor mejamu.</p>
+  </div>
+</div>
+
+<!-- Tambah Menu Modal (di halaman pelanggan) -->
+<div id="addMenuModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4">
+  <div onclick="this.parentElement.classList.add('hidden')" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-[24px] w-full max-w-lg shadow-2xl max-h-[85vh] overflow-auto">
+    <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-[24px]">
+      <div>
+        <h3 class="font-black">Tambah Menu Baru</h3>
+        <p class="text-xs text-slate-500">Langsung tampil di daftar menu — bisa pakai foto upload</p>
+      </div>
+      <button onclick="document.getElementById('addMenuModal').classList.add('hidden')" class="w-9 h-9 bg-slate-100 rounded-full"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-6 space-y-3">
+      <div>
+        <label class="text-xs font-bold">Nama Menu <span class="text-red-500">*</span></label>
+        <input id="addMName" placeholder="Kopi Susu Gula Aren" class="w-full mt-1.5 px-4 py-3 border rounded-xl text-sm">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-bold">Harga (Rp) <span class="text-red-500">*</span></label><input id="addMPrice" type="number" placeholder="25000" class="w-full mt-1.5 px-4 py-3 border rounded-xl text-sm"></div>
+        <div><label class="text-xs font-bold">Kategori</label><select id="addMCat" class="w-full mt-1.5 px-4 py-3 border rounded-xl text-sm bg-white"><option value="kopi">Kopi</option><option value="nonkopi">Non-Kopi</option><option value="makanan">Makanan</option><option value="snack">Snack</option></select></div>
+      </div>
+      <div>
+        <label class="text-xs font-bold">Foto Menu</label>
+        <input type="file" id="addMFile" accept="image/*" onchange="handleAddMenuFile(this)" class="w-full mt-1.5 px-3 py-2 border rounded-xl text-sm bg-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-600 file:text-white file:text-xs file:font-bold">
+        <input id="addMImg" placeholder="https://.../gambar.jpg (opsional)" class="w-full mt-2 px-4 py-2.5 border rounded-xl text-sm bg-slate-50">
+        <div id="addPreviewWrap" class="hidden mt-2 flex gap-2 bg-slate-50 border rounded-xl p-2 items-center"><img id="addPreview" src="" class="w-12 h-12 rounded-lg object-cover"><span id="addPreviewName" class="text-xs font-bold truncate flex-1"></span><button onclick="clearAddMenuFile()" class="w-7 h-7 bg-white border rounded-full text-xs"><i class="fa-solid fa-xmark"></i></button></div>
+      </div>
+      <div><label class="text-xs font-bold">Deskripsi</label><input id="addMDesc" placeholder="Espresso + susu gula aren" class="w-full mt-1.5 px-4 py-3 border rounded-xl text-sm"></div>
+      <button onclick="addMenuFromCustomer()" class="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold"><i class="fa-solid fa-plus"></i> Tambah ke Menu</button>
+      <p class="text-xs text-slate-400 text-center">Menu baru langsung bisa dipesan semua meja</p>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-3 rounded-full text-sm font-semibold shadow-xl hidden z-50"></div>
+<button onclick="document.getElementById('helpModal').classList.remove('hidden')" class="fixed bottom-6 left-4 w-12 h-12 bg-white border shadow-lg rounded-full flex items-center justify-center text-amber-600 z-40"><i class="fa-solid fa-question"></i></button>
+
+<script>
+const DEFAULT_MENU = [
+  {id:1, name:"Kopi Susu Gula Aren", price:25000, cat:"kopi", img:"https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400", desc:"Espresso + susu + gula aren legit"},
+  {id:2, name:"Americano", price:22000, cat:"kopi", img:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400", desc:"Hot / Ice"},
+  {id:3, name:"Cappuccino", price:28000, cat:"kopi", img:"https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400", desc:"Foam creamy"},
+  {id:4, name:"Matcha Latte", price:30000, cat:"nonkopi", img:"https://images.unsplash.com/photo-1515825838458-f2a94b20105a?w=400", desc:"Premium matcha Jepang"},
+  {id:5, name:"Lychee Tea", price:24000, cat:"nonkopi", img:"https://images.unsplash.com/photo-1544148103-005eec06c04d?w=400", desc:"Teh lychee segar"},
+  {id:6, name:"Nasi Goreng Special", price:35000, cat:"makanan", img:"https://images.unsplash.com/photo-1603133872875-ca2a98a0a862?w=400", desc:"Telur + ayam + kerupuk"},
+  {id:7, name:"Chicken Katsu Curry", price:42000, cat:"makanan", img:"https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400", desc:"Katsu + curry Jepang"},
+  {id:8, name:"Mie Goreng Aceh", price:33000, cat:"makanan", img:"https://images.unsplash.com/photo-1612874742237-6526221588d2?w=400", desc:"Pedas mantap"},
+  {id:9, name:"Kentang Goreng", price:18000, cat:"snack", img:"https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400", desc:"200gr + saus"},
+  {id:10, name:"Roti Bakar Coklat Keju", price:22000, cat:"snack", img:"https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400", desc:"Lumer di mulut"},
+  {id:11, name:"Croissant Butter", price:20000, cat:"snack", img:"https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=400", desc:"Fresh bake"},
+  {id:12, name:"Chocolate Ice", price:26000, cat:"nonkopi", img:"https://images.unsplash.com/photo-1579954115545-a95591f99d71?w=400", desc:"Coklat premium"},
+];
+function getMenu(){ const s=localStorage.getItem('cafe_menu'); if(s) return JSON.parse(s); localStorage.setItem('cafe_menu', JSON.stringify(DEFAULT_MENU)); return DEFAULT_MENU; }
+let menu=getMenu();
+function cartKey(){ return tableNo ? `cafe_cart_${tableNo}` : 'cafe_cart'; }
+function customerKey(){ return tableNo ? `cafe_customer_${tableNo}` : 'cafe_customer'; }
+let cart=[]; try{ cart=JSON.parse(localStorage.getItem(cartKey())||'[]'); }catch(e){ cart=[]; }
+let filterCat='all'; let searchQuery='';
+const urlParams=new URLSearchParams(location.search);
+let tableNo=urlParams.get('meja')||urlParams.get('code')||urlParams.get('table')||localStorage.getItem('cafe_table')||'';
+if(tableNo && /MEJA/i.test(tableNo)){ const m=tableNo.match(/(\d+)/); if(m) tableNo=m[1]; }
+if(!tableNo){ document.getElementById('noTableAlert').classList.remove('hidden'); } else {
+  localStorage.setItem('cafe_table',tableNo);
+  // load per-meja cart & customer
+  try{ cart=JSON.parse(localStorage.getItem(cartKey())||'[]'); }catch(e){ cart=[]; }
+  const savedCust=localStorage.getItem(customerKey()) || localStorage.getItem('cafe_customer') || '';
+  if(savedCust){ const a=document.getElementById('customerName'); const b=document.getElementById('customerNameDrawer'); if(a) a.value=savedCust; setTimeout(()=>{ const bb=document.getElementById('customerNameDrawer'); if(bb) bb.value=savedCust; }, 200); }
+  const ct=document.getElementById('changeTableBtn'); if(ct) ct.classList.remove('hidden');
+}
+function setManualTable(){ const v=document.getElementById('manualTable').value || document.getElementById('inlineManual')?.value; if(!v) return; const num=(v.match(/(\d+)/)||[])[1]||v; location.href='?meja='+num; }
+function clearTable(){ localStorage.removeItem('cafe_table'); location.href='scanner.html'; }
+function inlineManualGo(){ setManualTable(); }
+let inlineScanner=null; let inlineScanned=false;
+function openScanModal(){ document.getElementById('scanModal').classList.remove('hidden'); inlineScanned=false; setTimeout(async()=>{ try{ inlineScanner=new Html5Qrcode("inlineReader"); const cams=await Html5Qrcode.getCameras(); const camId=cams[cams.length-1]?.id||cams[0]?.id; await inlineScanner.start(camId,{fps:12,qrbox:{width:260,height:130}},(text)=>{ if(inlineScanned) return; inlineScanned=true; let parsed=null; if(text.includes('meja=')){ try{ const u=new URL(text); parsed=u.searchParams.get('meja'); }catch(e){} } if(!parsed){ const m=text.match(/(\d+)/); if(m) parsed=m[1]; } if(parsed){ if(navigator.vibrate) navigator.vibrate(200); showToast('Meja '+parsed+' terdeteksi'); setTimeout(()=> location.href='?meja='+parsed,600); } else { showToast('Kode: '+text); inlineScanned=false; } },()=>{});}catch(e){ document.getElementById('inlineReader').innerHTML=`<div class="p-10 text-center text-slate-400 text-sm">Kamera gagal: ${e.message}<br><a href="scanner.html" class="text-amber-400 underline">Buka scanner.html</a></div>`; }},300);}
+async function closeScanModal(){ document.getElementById('scanModal').classList.add('hidden'); try{ if(inlineScanner) await inlineScanner.stop(); inlineScanner=null; }catch(e){} }
+function updateTableUI(){ const label=tableNo?'MEJA '+tableNo:'Belum pilih meja'; document.getElementById('tableBadge').textContent=label; document.querySelectorAll('.tableLabel').forEach(e=>e.textContent=tableNo?'Meja '+tableNo:'Meja -'); document.getElementById('cafeTitle').textContent=localStorage.getItem('cafe_name')||'Kopi Senja Cafe'; }
+updateTableUI();
+function renderMenu(){
+  const grid=document.getElementById('menuGrid'); const countEl=document.getElementById('menuCount');
+  const filtered=menu.filter(m=>{ const catOk=filterCat==='all'||m.cat===filterCat; const searchOk=!searchQuery||m.name.toLowerCase().includes(searchQuery)||m.desc.toLowerCase().includes(searchQuery); return catOk&&searchOk; });
+  if(countEl) countEl.textContent=filtered.length+' menu';
+  grid.innerHTML='';
+  filtered.forEach(item=>{
+    const qty=cart.find(c=>c.id===item.id)?.qty||0;
+    const el=document.createElement('div'); el.className='bg-white rounded-[18px] overflow-hidden border shadow-sm flex flex-col hover:shadow-md transition';
+    el.innerHTML=`<div class="relative"><img src="${item.img}" class="h-36 w-full object-cover"><span class="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur text-[11px] font-bold px-2.5 py-1 rounded-full border capitalize">${item.cat}</span>${qty?`<span class="absolute top-2.5 right-2.5 bg-amber-600 text-white text-xs w-7 h-7 flex items-center justify-center rounded-full font-black">${qty}</span>`:''}</div><div class="p-3.5 flex-1 flex flex-col"><h3 class="font-bold text-sm leading-tight">${item.name}</h3><p class="text-xs text-slate-500 mt-1 line-clamp-2">${item.desc}</p><div class="flex items-center justify-between mt-3"><span class="font-black text-amber-700 text-sm">Rp ${item.price.toLocaleString('id-ID')}</span><div class="flex items-center gap-1.5">${qty?`<button onclick="updateQty(${item.id},-1)" class="w-8 h-8 bg-slate-100 rounded-full font-bold">-</button><span class="text-sm font-bold w-5 text-center">${qty}</span>`:''}<button onclick="updateQty(${item.id},1)" class="px-3.5 py-1.5 bg-slate-900 text-white rounded-full text-xs font-bold">${qty?'+':'Tambah'}</button></div></div></div>`;
+    grid.appendChild(el);
+  });
+}
+function saveCart(){ localStorage.setItem(cartKey(), JSON.stringify(cart)); // keep global fallback for compat
+  try{ localStorage.setItem('cafe_cart', JSON.stringify(cart)); }catch(e){} }
+function updateQty(id,delta){ const item=menu.find(m=>m.id===id); let f=cart.find(c=>c.id===id); if(!f&&delta>0) cart.push({id:item.id,name:item.name,price:item.price,qty:1,img:item.img}); else if(f){ f.qty+=delta; if(f.qty<=0) cart=cart.filter(c=>c.id!==id); } saveCart(); renderMenu(); renderCart(); if(delta>0) showToast(item.name+' ditambahkan'); }
+function renderCart(){
+  const c=document.getElementById('cartItems'); const count=cart.reduce((s,x)=>s+x.qty,0); const tot=cart.reduce((s,x)=>s+x.price*x.qty,0);
+  document.getElementById('cartCount').textContent=count; document.getElementById('cartTotal').textContent='Rp '+tot.toLocaleString('id-ID'); document.getElementById('total').textContent='Rp '+tot.toLocaleString('id-ID');
+  if(!cart.length){ c.innerHTML='<div class="text-center py-12 text-slate-500"><i class="fa-solid fa-basket-shopping text-3xl mb-2"></i><p class="text-sm">Keranjang kosong</p><p class="text-xs">Pilih menu favoritmu</p></div>'; return; }
+  c.innerHTML=cart.map(x=>`<div class="flex gap-3 bg-slate-50 border rounded-2xl p-3"><img src="${x.img}" class="w-14 h-14 rounded-xl object-cover"><div class="flex-1"><h4 class="font-bold text-sm">${x.name}</h4><p class="text-xs text-slate-500">Rp ${x.price.toLocaleString('id-ID')} × ${x.qty}</p><div class="flex items-center gap-2 mt-1.5"><button onclick="updateQty(${x.id},-1)" class="w-7 h-7 bg-white border rounded-full text-xs">-</button><span class="text-sm font-bold">${x.qty}</span><button onclick="updateQty(${x.id},1)" class="w-7 h-7 bg-slate-900 text-white rounded-full text-xs">+</button><span class="ml-auto font-black text-sm">Rp ${(x.price*x.qty).toLocaleString('id-ID')}</span></div></div></div>`).join('');
+}
+let selectedPay='cash';
+function selectPay(v){
+  selectedPay=v;
+  document.querySelectorAll('.pay-btn').forEach(b=>{
+    const isActive=b.dataset.pay===v;
+    b.className=isActive?'pay-btn py-2.5 bg-slate-900 text-white border-2 border-slate-900 rounded-xl text-xs font-bold flex flex-col items-center gap-1':'pay-btn py-2.5 bg-white border rounded-xl text-xs font-bold flex flex-col items-center gap-1 text-slate-700';
+  });
+  const hints={cash:'Bayar tunai di kasir setelah makan', qris:'Scan QRIS di kasir / meja', transfer:'Transfer ke BCA 123-456-7890 a.n. Kopi Senja', ewallet:'GoPay/DANA/OVO ke 0812-3456-7890'};
+  document.getElementById('payHint').textContent=hints[v]||'';
+}
+function clearCart(){ cart=[]; saveCart(); renderMenu(); renderCart(); }
+function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),2000); }
+function syncCustomerName(){
+  const a=document.getElementById('customerName'); const b=document.getElementById('customerNameDrawer');
+  if(a && b){ if(document.activeElement===a) b.value=a.value; if(document.activeElement===b) a.value=b.value; }
+  const v=(b?.value||a?.value||'').trim();
+  if(tableNo) localStorage.setItem(customerKey(), v);
+  else localStorage.setItem('cafe_customer', v);
+}
+document.getElementById('customerName')?.addEventListener('input', syncCustomerName);
+document.getElementById('customerNameDrawer')?.addEventListener('input', syncCustomerName);
+(function(){
+  const key=tableNo?customerKey():'cafe_customer';
+  const saved=localStorage.getItem(key) || localStorage.getItem('cafe_customer') || '';
+  if(saved){ const a=document.getElementById('customerName'); const b=document.getElementById('customerNameDrawer'); if(a) a.value=saved; if(b) b.value=saved; }
+})();
+let pendingOrder=null;
+function placeOrder(){
+  if(!tableNo) return alert('Scan barcode meja dulu');
+  if(!cart.length) return alert('Keranjang kosong');
+  const drawerName=document.getElementById('customerNameDrawer')?.value.trim();
+  const sideName=document.getElementById('customerName')?.value.trim();
+  let customer=drawerName || sideName || '';
+  if(!customer){
+    const inp=document.getElementById('customerNameDrawer'); if(inp){ inp.focus(); inp.classList.add('ring-2','ring-red-400'); setTimeout(()=>inp.classList.remove('ring-2','ring-red-400'),2000); }
+    const need=confirm('Nama belum diisi.\nKlik OK untuk lanjut sebagai \"Tamu\", atau Cancel untuk isi nama dulu.');
+    if(!need) return;
+    customer='Tamu';
+  }
+  if(customer!=='Tamu' && tableNo) localStorage.setItem(customerKey(), customer);
+  else if(customer!=='Tamu') localStorage.setItem('cafe_customer', customer);
+  // tampilkan modal pembayaran dulu — belum dikirim ke dapur
+  showPaymentModal(customer);
+  return;
+}
+function showPaymentModal(customer){
+  const tot=cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const payLabels={cash:'Bayar di Kasir', qris:'QRIS', transfer:'Transfer', ewallet:'E-Wallet'};
+  const payLabel=payLabels[selectedPay]||selectedPay;
+  pendingOrder={customer, payLabel, tot};
+  document.getElementById('payMeja').textContent=tableNo?'MEJA '+tableNo:'-';
+  document.getElementById('payCustomer').textContent=customer;
+  document.getElementById('payTotal').textContent='Rp '+tot.toLocaleString('id-ID');
+  document.getElementById('payMethodLabel').textContent=payLabel;
+  document.getElementById('payItems').innerHTML=cart.map(c=>`<div class="flex justify-between"><span>${c.qty}x ${c.name}</span><span class="font-bold">Rp ${(c.price*c.qty).toLocaleString('id-ID')}</span></div>`).join('');
+  const inst=document.getElementById('payInstruction');
+  const qrWrap=document.getElementById('payQRWrap');
+  const qrEl=document.getElementById('payQR');
+  qrWrap.classList.add('hidden'); qrEl.innerHTML='';
+  if(selectedPay==='cash'){
+    inst.className='rounded-2xl p-4 border bg-amber-50 border-amber-200';
+    inst.innerHTML=`<p class="font-bold text-sm text-amber-800"><i class="fa-solid fa-money-bill-wave"></i> Bayar Tunai di Kasir</p><p class="text-xs text-amber-800/80 mt-1">Setelah klik <b>Bayar & Kirim Pesanan</b>, pesanan masuk dapur. Kamu bayar <b>Rp ${tot.toLocaleString('id-ID')}</b> ke kasir saat selesai makan / saat diantar. Tunjukkan ID pesanan.</p>`;
+  } else if(selectedPay==='qris'){
+    inst.className='rounded-2xl p-4 border bg-emerald-50 border-emerald-200';
+    inst.innerHTML=`<p class="font-bold text-sm text-emerald-800"><i class="fa-solid fa-qrcode"></i> Scan QRIS</p><p class="text-xs text-emerald-700 mt-1">Buka e-wallet / mobile banking → Scan QR di bawah → Bayar <b>Rp ${tot.toLocaleString('id-ID')}</b> → centang konfirmasi baru kirim.</p>`;
+    qrWrap.classList.remove('hidden');
+    setTimeout(()=>{ qrEl.innerHTML=''; new QRCode(qrEl, {text:`QRIS|MEJA${tableNo}|${pendingOrder.customer}|${tot}|${Date.now()}`, width:160, height:160, colorDark:"#065f46", colorLight:"#ffffff", correctLevel:QRCode.CorrectLevel.H}); document.getElementById('payQRText').textContent='QRIS - Rp '+tot.toLocaleString('id-ID'); }, 100);
+  } else if(selectedPay==='transfer'){
+    inst.className='rounded-2xl p-4 border bg-blue-50 border-blue-200';
+    inst.innerHTML=`<p class="font-bold text-sm text-blue-800"><i class="fa-solid fa-building-columns"></i> Transfer Bank</p><p class="text-xs text-blue-700 mt-1">Transfer <b>Rp ${tot.toLocaleString('id-ID')}</b> ke:<br><b>BCA 123-456-7890</b> a.n. Kopi Senja Cafe<br>Berita: <b>MEJA${tableNo} ${customer}</b><br>Setelah transfer, centang & kirim.</p><button onclick="navigator.clipboard.writeText('1234567890')" class="mt-2 px-3 py-1 bg-white border rounded-full text-xs font-bold">Salin No Rek</button>`;
+  } else {
+    inst.className='rounded-2xl p-4 border bg-purple-50 border-purple-200';
+    inst.innerHTML=`<p class="font-bold text-sm text-purple-800"><i class="fa-solid fa-wallet"></i> E-Wallet</p><p class="text-xs text-purple-700 mt-1">Kirim <b>Rp ${tot.toLocaleString('id-ID')}</b> ke:<br><b>GoPay/DANA/OVO 0812-3456-7890</b> a.n. Kopi Senja<br>Berita: <b>MEJA${tableNo} ${customer}</b></p><button onclick="navigator.clipboard.writeText('081234567890')" class="mt-2 px-3 py-1 bg-white border rounded-full text-xs font-bold">Salin Nomor</button>`;
+  }
+  document.getElementById('payConfirmCheck').checked=false;
+  const btn=document.getElementById('btnConfirmPay'); btn.disabled=true; btn.className='flex-1 py-3 bg-slate-300 text-white rounded-xl font-bold text-sm';
+  document.getElementById('paymentModal').classList.remove('hidden');
+  document.getElementById('payConfirmCheck').onchange=()=>{
+    const ok=document.getElementById('payConfirmCheck').checked;
+    btn.disabled=!ok; btn.className= ok ? 'flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm' : 'flex-1 py-3 bg-slate-300 text-white rounded-xl font-bold text-sm';
+  };
+}
+function closePaymentModal(){ document.getElementById('paymentModal').classList.add('hidden'); pendingOrder=null; }
+function confirmPayment(){
+  if(!pendingOrder) return;
+  if(!document.getElementById('payConfirmCheck').checked) return alert('Centang konfirmasi pembayaran dulu');
+  const customer=pendingOrder.customer; const tot=pendingOrder.tot; const payLabel=pendingOrder.payLabel;
+  const note=document.getElementById('note').value||'';
+  const o={id:'ORD'+Date.now()+'-'+Math.random().toString(36).slice(2,5),table:tableNo,customer,items:[...cart],note,subtotal:tot,tax:0,total:tot,status:'pending',payment:selectedPay,paymentLabel:payLabel,time:new Date().toLocaleString('id-ID'),timestamp:Date.now()};
+  // safe push untuk multi-pelanggan berbarengan
+  let orders=JSON.parse(localStorage.getItem('cafe_orders')||'[]');
+  orders.unshift(o);
+  localStorage.setItem('cafe_orders',JSON.stringify(orders));
+  // verifikasi & merge jika ada race (baca ulang, pastikan id kita ada, jika tidak merge)
+  try{
+    let verify=JSON.parse(localStorage.getItem('cafe_orders')||'[]');
+    if(!verify.find(x=>x.id===o.id)){
+      verify.unshift(o);
+      localStorage.setItem('cafe_orders', JSON.stringify(verify));
+    }
+  }catch(e){}
+  try{ new BroadcastChannel('cafe').postMessage({type:'new_order', order:o});}catch(e){}
+  // langsung keluar — tutup semua modal & keranjang
+  document.getElementById('paymentModal').classList.add('hidden');
+  pendingOrder=null;
+  clearCart(); document.getElementById('cartDrawer').classList.add('translate-y-full'); document.getElementById('note').value=''; showToast('Pembayaran berhasil • '+o.id+' a.n. '+customer); renderMyOrders(); if(navigator.vibrate) navigator.vibrate([100,50,100]);
+}
+function renderMyOrders(){
+  if(!tableNo) return; const orders=JSON.parse(localStorage.getItem('cafe_orders')||'[]').filter(o=>String(o.table)===String(tableNo));
+  const el=document.getElementById('myOrders'); if(!orders.length){ el.innerHTML='<p class="text-xs text-slate-500 text-center py-4">Belum ada pesanan di meja ini</p>'; return; }
+  el.innerHTML=orders.slice(0,5).map(o=>`<div class="border rounded-2xl p-3 ${o.status==='pending'?'bg-amber-50 border-amber-200':o.status==='cooking'?'bg-blue-50 border-blue-200':o.status==='ready'?'bg-emerald-50 border-emerald-200':'bg-slate-50'}"><div class="flex justify-between items-start"><span class="font-bold text-xs">${o.id}</span><span class="text-[10px] px-2 py-1 rounded-full font-black ${o.status==='pending'?'bg-amber-600 text-white':o.status==='cooking'?'bg-blue-600 text-white':o.status==='ready'?'bg-emerald-600 text-white':'bg-slate-600 text-white'}">${o.status.toUpperCase()}</span></div><p class="text-xs mt-1.5">${o.items.map(i=>`${i.qty}× ${i.name}`).join(', ')}</p><p class="text-xs font-black mt-1">Rp ${o.total.toLocaleString('id-ID')} • <span class="text-[11px] font-bold text-amber-700">${o.paymentLabel||'Cash'}</span></p><p class="text-[11px] text-slate-500">${o.time} • ${o.customer}</p>${o.note?`<p class="text-[11px] bg-white border p-2 rounded-xl mt-2">Catatan: ${o.note}</p>`:''}</div>`).join('');
+}
+let addMenuDataUrl=null;
+function openAddMenuModal(){ document.getElementById('addMenuModal').classList.remove('hidden'); }
+function handleAddMenuFile(input){
+  const f=input.files[0]; if(!f) return;
+  if(f.size>800*1024){ alert('Maks 800KB'); input.value=''; return; }
+  const r=new FileReader(); r.onload=e=>{ addMenuDataUrl=e.target.result; document.getElementById('addPreview').src=addMenuDataUrl; document.getElementById('addPreviewName').textContent=f.name+' • '+(f.size/1024).toFixed(0)+'KB'; document.getElementById('addPreviewWrap').classList.remove('hidden'); document.getElementById('addMImg').value=''; }; r.readAsDataURL(f);
+}
+function clearAddMenuFile(){ addMenuDataUrl=null; document.getElementById('addMFile').value=''; document.getElementById('addPreviewWrap').classList.add('hidden'); }
+function addMenuFromCustomer(){
+  const name=document.getElementById('addMName').value.trim(); const price=parseInt(document.getElementById('addMPrice').value); const cat=document.getElementById('addMCat').value; const urlImg=document.getElementById('addMImg').value.trim(); const desc=document.getElementById('addMDesc').value.trim()||name;
+  if(!name||!price) return alert('Nama & harga wajib');
+  const img=addMenuDataUrl || urlImg || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
+  const list=JSON.parse(localStorage.getItem('cafe_menu')||'[]'); list.unshift({id:Date.now(), name, price, cat, img, desc}); localStorage.setItem('cafe_menu', JSON.stringify(list)); menu=list;
+  document.getElementById('addMName').value=''; document.getElementById('addMPrice').value=''; document.getElementById('addMImg').value=''; document.getElementById('addMDesc').value=''; clearAddMenuFile();
+  document.getElementById('addMenuModal').classList.add('hidden'); renderMenu(); showToast('Menu ditambahkan: '+name); try{ new BroadcastChannel('cafe').postMessage({type:'menu_update'});}catch(e){}
+}
+document.querySelectorAll('.cat-btn').forEach(btn=>{ btn.addEventListener('click',()=>{ document.querySelectorAll('.cat-btn').forEach(b=>{b.classList.remove('bg-slate-900','text-white'); b.classList.add('bg-white','border')}); btn.classList.add('bg-slate-900','text-white'); btn.classList.remove('bg-white','border'); filterCat=btn.dataset.cat; renderMenu(); }); });
+const s=document.getElementById('search'); const sm=document.getElementById('searchMobile');
+if(s) s.addEventListener('input',e=>{ searchQuery=e.target.value.toLowerCase(); if(sm) sm.value=e.target.value; renderMenu(); });
+if(sm) sm.addEventListener('input',e=>{ searchQuery=e.target.value.toLowerCase(); if(s) s.value=e.target.value; renderMenu(); });
+// multi-pelanggan: nama per meja dihapus setelah pesanan selesai diantar
+let lastDoneIds=new Set();
+function checkDoneAndClear(){
+  if(!tableNo) return;
+  const all=JSON.parse(localStorage.getItem('cafe_orders')||'[]').filter(o=>String(o.table)===String(tableNo));
+  const dones=all.filter(o=>o.status==='done');
+  const actives=all.filter(o=>['pending','cooking','ready'].includes(o.status));
+  const newDones=dones.filter(o=>!lastDoneIds.has(o.id));
+  if(newDones.length){
+    newDones.forEach(o=> lastDoneIds.add(o.id));
+    if(actives.length===0 && dones.length>0){
+      // semua selesai — bersihkan nama meja ini untuk pelanggan berikutnya
+      localStorage.removeItem(customerKey());
+      localStorage.removeItem('cafe_customer');
+      const a=document.getElementById('customerName'); const b=document.getElementById('customerNameDrawer');
+      if(a) a.value=''; if(b) b.value='';
+      // bersihkan keranjang meja ini juga
+      cart=[]; saveCart(); renderCart();
+      showToast('Pesanan meja '+tableNo+' selesai — nama dibersihkan, siap untuk pelanggan berikutnya');
+    }
+  }
+  // init lastDoneIds on load
+  if(lastDoneIds.size===0 && dones.length) dones.forEach(o=> lastDoneIds.add(o.id));
+}
+setInterval(checkDoneAndClear, 2000);
+renderMenu(); renderCart(); renderMyOrders(); setInterval(renderMyOrders,2000);
+try{ const bc=new BroadcastChannel('cafe'); bc.onmessage=(e)=>{
+  if(e.data?.type==='menu_update'){ menu=getMenu(); renderMenu(); return; }
+  if(e.data?.type==='new_order' && e.data.order){
+    // merge order jika belum ada (untuk concurrency)
+    let cur=JSON.parse(localStorage.getItem('cafe_orders')||'[]');
+    if(!cur.find(x=>x.id===e.data.order.id)){ cur.unshift(e.data.order); localStorage.setItem('cafe_orders', JSON.stringify(cur)); }
+  }
+  renderMyOrders(); checkDoneAndClear();
+}; }catch(e){}
+window.addEventListener('storage', e=>{
+  if(e.key==='cafe_menu'){ menu=getMenu(); renderMenu(); }
+  if(e.key==='cafe_orders'){ renderMyOrders(); checkDoneAndClear(); }
+});
+</script>
+</body>
+</html>

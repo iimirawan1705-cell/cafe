@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barcode Meja - CafeBar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+@media print {
+  @page { margin: 10mm; }
+  body * { visibility: hidden; }
+  #print-card, #print-card * { visibility: visible; }
+  #print-card { position: absolute; left:50%; top:0; transform: translateX(-50%); width: 88mm; }
+  .no-print { display:none !important; }
+}
+</style>
+</head>
+<body class="bg-[#fcfaf7] min-h-screen antialiased">
+<nav class="bg-white border-b sticky top-0 z-40 no-print">
+  <div class="max-w-3xl mx-auto px-4 h-[60px] flex items-center justify-between">
+    <a href="index.html" class="flex items-center gap-2.5">
+      <div class="w-9 h-9 bg-amber-600 rounded-xl flex items-center justify-center text-white"><i class="fa-solid fa-barcode"></i></div>
+      <div class="leading-none"><div class="font-bold text-sm">CafeBar</div><div class="text-[11px] text-slate-500">Barcode Meja</div></div>
+    </a>
+    <div class="flex gap-2">
+      <a href="index.html" class="px-3.5 py-2 bg-slate-100 rounded-full text-xs font-semibold">Semua Meja</a>
+      <a href="scanner.html" class="px-3.5 py-2 bg-slate-900 text-white rounded-full text-xs font-bold">Scanner</a>
+    </div>
+  </div>
+</nav>
+
+<div class="max-w-3xl mx-auto px-4 py-6">
+  <!-- Kontrol -->
+  <div class="bg-white rounded-[20px] border shadow-sm p-5 no-print">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h2 class="font-bold text-sm flex items-center gap-2"><span class="w-7 h-7 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-chair"></i></span> Barcode 1 Meja = 1 Kartu</h2>
+        <p class="text-xs text-slate-500 mt-1">Pilih nomor meja → Cetak → Tempel di meja. Pelanggan cukup scan, tidak perlu panggil pelayan.</p>
+      </div>
+      <span class="text-[11px] font-bold bg-emerald-600 text-white px-2.5 py-1 rounded-full">Siap Cetak 88mm</span>
+    </div>
+    <div class="mt-3">
+      <label class="text-xs font-bold text-slate-700">Base URL (samakan dengan Generator — pakai IP LAN)</label>
+      <input id="baseUrlSingle" class="w-full mt-1.5 px-3 py-2.5 border rounded-xl text-xs bg-white">
+      <p id="baseWarnSingle" class="hidden text-[11px] font-bold text-red-600 mt-1">Masih localhost — HP tidak bisa buka. Ganti 192.168.1.31</p>
+    </div>
+    <div class="flex gap-2 mt-3">
+      <select id="selectMeja" class="flex-1 px-3.5 py-3 border rounded-xl text-sm font-bold bg-white"></select>
+      <button onclick="renderSingle()" class="px-5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm">Tampilkan</button>
+    </div>
+    <div class="grid grid-cols-2 gap-2 mt-3">
+      <button onclick="window.print()" class="py-3 bg-slate-900 text-white rounded-xl text-sm font-bold"><i class="fa-solid fa-print mr-1"></i> Cetak</button>
+      <button onclick="downloadBarcode()" class="py-3 bg-white border rounded-xl text-sm font-bold"><i class="fa-solid fa-download mr-1"></i> Download PNG</button>
+    </div>
+  </div>
+
+  <!-- Kartu -->
+  <div id="print-card" class="mt-5 bg-white rounded-[28px] border-2 border-dashed border-stone-200 shadow-sm overflow-hidden max-w-[420px] mx-auto">
+    <!-- header kartu -->
+    <div class="px-6 pt-6 flex items-center justify-between">
+      <span id="cafeNameLabel" class="text-[11px] font-black tracking-wide bg-slate-900 text-white px-3 py-1 rounded-full">Kopi Senja Cafe</span>
+      <span class="text-[11px] font-semibold text-slate-500 flex items-center gap-1"><i class="fa-solid fa-barcode"></i> CODE128</span>
+    </div>
+    <div class="px-6 pt-4 text-center">
+      <div id="mejaBadge" class="inline-flex items-center justify-center bg-amber-600 text-white px-7 py-2 rounded-full font-black text-xl tracking-widest">MEJA 1</div>
+      <p class="text-xs text-slate-500 mt-2 font-medium">Scan barcode untuk pesan langsung di meja</p>
+    </div>
+    <!-- barcode area -->
+    <div class="mx-6 mt-5 bg-white border rounded-2xl p-4 flex flex-col items-center">
+      <svg id="barcodeSingle" class="w-full max-w-[360px]"></svg>
+      <p id="urlLabel" class="text-[11px] font-mono text-slate-500 break-all text-center mt-3 leading-tight"></p>
+    </div>
+    <!-- steps -->
+    <div class="grid grid-cols-3 gap-2 mx-6 mt-4">
+      <div class="bg-stone-50 border rounded-2xl p-3 text-center">
+        <div class="w-8 h-8 bg-white border rounded-full flex items-center justify-center mx-auto text-amber-600 text-xs"><i class="fa-solid fa-camera"></i></div>
+        <div class="text-xs font-bold mt-1.5">Scan</div><div class="text-[11px] text-slate-500">Kamera HP</div>
+      </div>
+      <div class="bg-stone-50 border rounded-2xl p-3 text-center">
+        <div class="w-8 h-8 bg-white border rounded-full flex items-center justify-center mx-auto text-amber-600 text-xs"><i class="fa-solid fa-utensils"></i></div>
+        <div class="text-xs font-bold mt-1.5">Pilih</div><div class="text-[11px] text-slate-500">Menu favorit</div>
+      </div>
+      <div class="bg-stone-50 border rounded-2xl p-3 text-center">
+        <div class="w-8 h-8 bg-white border rounded-full flex items-center justify-center mx-auto text-amber-600 text-xs"><i class="fa-solid fa-bell-concierge"></i></div>
+        <div class="text-xs font-bold mt-1.5">Antar</div><div class="text-[11px] text-slate-500">Ke meja</div>
+      </div>
+    </div>
+    <p class="text-[10px] text-slate-400 text-center mt-3 px-6 leading-relaxed">Barcode berisi link meja ini. Bisa discan pakai scanner.html atau kamera bawaan HP.</p>
+    <!-- actions -->
+    <div class="p-4 bg-slate-50/70 border-t mt-4 flex gap-2 no-print">
+      <a id="openMenuBtn" href="menu.html?meja=1" target="_blank" class="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm text-center">Buka Menu Meja <i class="fa-solid fa-arrow-right ml-1"></i></a>
+      <button onclick="nextMeja()" class="px-4 py-3 bg-white border rounded-xl text-sm font-semibold">Next →</button>
+    </div>
+  </div>
+  <p class="text-center text-xs text-slate-400 mt-4 no-print">Ukuran cetak ideal: 88×110mm • Kertas stiker glossy + laminating</p>
+</div>
+
+<script>
+function getAutoBase(){ return location.href.replace('barcode-permeja.html','').replace(/\/$/,'') + '/menu.html'; }
+function getBase(){
+  const inp=document.getElementById('baseUrlSingle');
+  const v=(inp && inp.value.trim()) || localStorage.getItem('cafe_base_url') || getAutoBase();
+  return v.replace(/\/$/,'');
+}
+const urlParams=new URLSearchParams(location.search);
+let curMeja=parseInt(urlParams.get('meja')||urlParams.get('table')||'1');
+const cafe=localStorage.getItem('cafe_name')||'Kopi Senja Cafe';
+document.getElementById('cafeNameLabel').textContent=cafe;
+const sel=document.getElementById('selectMeja');
+for(let i=1;i<=50;i++){ const o=document.createElement('option'); o.value=i; o.textContent='MEJA '+i; if(i===curMeja) o.selected=true; sel.appendChild(o); }
+sel.addEventListener('change',()=>{ curMeja=parseInt(sel.value); history.replaceState(null,'','?meja='+curMeja); renderSingle(); });
+function renderSingle(){
+  const prefix=(localStorage.getItem('cafe_prefix')||'MEJA').toUpperCase();
+  const url=`${getBase()}?meja=${curMeja}`;
+  document.getElementById('mejaBadge').textContent=prefix+' '+curMeja;
+  document.getElementById('urlLabel').textContent=url;
+  document.getElementById('openMenuBtn').href=url;
+  document.getElementById('openMenuBtn').innerHTML='Buka '+prefix+' '+curMeja+' <i class="fa-solid fa-arrow-right ml-1"></i>';
+  try{ JsBarcode("#barcodeSingle", url, {format:"CODE128", width:1.75, height:88, displayValue:true, fontSize:12, margin:10, background:"#fff", lineColor:"#0f172a"});}catch(e){}
+}
+function downloadBarcode(){
+  const svg=document.querySelector('#barcodeSingle');
+  const xml=new XMLSerializer().serializeToString(svg);
+  const svg64=btoa(unescape(encodeURIComponent(xml)));
+  const img=new Image();
+  img.onload=()=>{
+    const c=document.createElement('canvas'); c.width=img.width*2; c.height=img.height*2;
+    const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
+    const a=document.createElement('a'); a.download=`Barcode-MEJA-${curMeja}.png`; a.href=c.toDataURL('image/png'); a.click();
+  }; img.src='data:image/svg+xml;base64,'+svg64;
+}
+function nextMeja(){ curMeja=curMeja>=50?1:curMeja+1; sel.value=curMeja; history.replaceState(null,'','?meja='+curMeja); renderSingle(); }
+(function initBaseSingle(){
+  const inp=document.getElementById('baseUrlSingle');
+  inp.value=localStorage.getItem('cafe_base_url')||getAutoBase();
+  const check=()=>{ const v=inp.value||''; document.getElementById('baseWarnSingle').classList.toggle('hidden', !/localhost|127\.0\.0\.1/i.test(v)); localStorage.setItem('cafe_base_url', inp.value.trim()); };
+  inp.addEventListener('input', ()=>{ check(); renderSingle(); });
+  check();
+})();
+renderSingle();
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanner Barcode Meja - CafeBar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="bg-[#0a0a0a] text-white min-h-screen flex flex-col antialiased">
+<nav class="bg-[#141414] border-b border-white/10 sticky top-0 z-40">
+  <div class="max-w-3xl mx-auto px-4 h-[60px] flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 bg-amber-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-barcode"></i></div>
+      <div class="leading-none"><h1 class="font-bold text-sm">Scan Barcode Meja</h1><p class="text-xs text-white/50">Arahkan kamera ke barcode / QR di meja</p></div>
+    </div>
+    <a href="index.html" class="px-3.5 py-2 bg-white text-slate-900 rounded-full text-xs font-bold">Generator</a>
+  </div>
+</nav>
+
+<div class="flex-1 max-w-3xl mx-auto w-full px-4 py-5 flex flex-col gap-4">
+  <div class="bg-blue-600 rounded-2xl p-3 flex gap-2 items-center text-white text-xs">
+    <i class="fa-solid fa-lightbulb"></i> <b>Petunjuk:</b> Arahkan kotak kamera ke barcode hitam di meja, tahan 1 detik sampai bunyi — otomatis buka menu.
+  </div>
+  <div class="bg-[#1a1a1a] rounded-[24px] p-4 border border-white/10">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-bold text-sm flex items-center gap-2"><span class="w-7 h-7 bg-amber-600 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></span> Kamera Scanner</h2>
+      <span id="scanStatus" class="text-[11px] font-bold px-2.5 py-1 bg-emerald-600 rounded-full animate-pulse">Kamera Aktif</span>
+    </div>
+    <div id="reader" class="rounded-2xl overflow-hidden bg-black min-h-[300px] border border-white/5"></div>
+    <div class="grid grid-cols-2 gap-2 mt-3">
+      <button onclick="switchCamera()" class="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Ganti Kamera</button>
+      <button onclick="toggleTorch()" id="torchBtn" class="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold"><i class="fa-solid fa-lightbulb mr-1"></i> Torch</button>
+    </div>
+    <p class="text-[11px] text-white/40 text-center mt-2">Support: CODE128 • EAN13 • QR Code</p>
+  </div>
+
+  <div class="bg-white text-slate-900 rounded-[24px] p-5 shadow-sm">
+    <h3 class="font-bold text-sm flex items-center gap-2"><span class="w-7 h-7 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-keyboard"></i></span> Input Manual</h3>
+    <p class="text-xs text-slate-500 mt-1">Jika kamera gagal, ketik kode meja</p>
+    <div class="flex gap-2 mt-3">
+      <input id="manualInput" placeholder="MEJA-5 / 5 / http://...?meja=5" class="flex-1 px-4 py-3 border rounded-xl text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none">
+      <button onclick="handleManual()" class="px-6 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm">Buka</button>
+    </div>
+    <div class="grid grid-cols-4 gap-2 mt-3">
+      <button onclick="quickMeja(1)" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold">1</button>
+      <button onclick="quickMeja(2)" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold">2</button>
+      <button onclick="quickMeja(5)" class="py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold">5</button>
+      <button onclick="quickMeja(10)" class="py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold">10</button>
+    </div>
+    <div id="resultBox" class="hidden mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+      <p class="text-sm font-black text-emerald-700 flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Barcode Terdeteksi!</p>
+      <p id="resultText" class="text-xs break-all mt-2 font-mono bg-white p-2.5 rounded-xl border"></p>
+      <p id="resultMeja" class="text-sm font-bold mt-2"></p>
+      <a id="resultLink" href="#" class="mt-3 block w-full text-center py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold">Buka Menu Meja <i class="fa-solid fa-arrow-right ml-1"></i></a>
+      <button onclick="continueScan()" class="w-full mt-2 py-2 bg-white border rounded-xl text-xs font-semibold">Scan Lagi</button>
+    </div>
+    <div class="mt-4 bg-amber-50 border border-amber-100 rounded-xl p-3">
+      <p class="text-xs font-bold text-amber-800">Tips</p><p class="text-xs text-amber-700/80 leading-relaxed">Jarak 10–20cm, cahaya cukup, barcode CODE128 tercetak jelas. Jika gagal, pakai Input Manual.</p>
+    </div>
+  </div>
+
+  <div class="bg-[#1a1a1a] rounded-[20px] p-4 border border-white/10">
+    <h3 class="font-bold text-sm">Riwayat Scan</h3>
+    <div id="history" class="mt-2 space-y-2 text-xs text-white/50"><p>Belum ada scan</p></div>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white text-slate-900 px-5 py-3 rounded-full text-sm font-bold shadow-xl hidden z-50"></div>
+<audio id="beep" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=notification-sound-7062.mp3" preload="auto"></audio>
+<script>
+let html5QrCode, currentCamId=null, cameras=[], torchOn=false, scanned=false;
+function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),2500); }
+function parseBarcode(text){
+  text=text.trim();
+  try{ if(text.includes('meja=')){ const u=new URL(text); const m=u.searchParams.get('meja'); if(m) return {meja:m, raw:text, url:text}; } }catch(e){}
+  const m1=text.match(/(?:MEJA[-\s]*)(\d+)/i); if(m1){ const meja=m1[1]; const base=location.href.replace('scanner.html','')+'menu.html?meja='+meja; return {meja, raw:text, url:base}; }
+  if(/^\d{1,3}$/.test(text)){ const base=location.href.replace('scanner.html','')+'menu.html?meja='+text; return {meja:text, raw:text, url:base}; }
+  if(text.includes('menu.html')){ const base=text.startsWith('http')?text:location.origin+'/'+text.replace(/^\//,''); try{ const u=new URL(base); const m=u.searchParams.get('meja'); if(m) return {meja:m, raw:text, url:base}; }catch(e){} }
+  return null;
+}
+function onScanSuccess(decodedText){
+  if(scanned) return;
+  const parsed=parseBarcode(decodedText);
+  if(!parsed){ showToast('Tidak dikenali: '+decodedText); document.getElementById('resultBox').classList.remove('hidden'); document.getElementById('resultText').textContent=decodedText; document.getElementById('resultMeja').textContent='Format tidak valid'; document.getElementById('resultLink').href='#'; addHistory(decodedText,'invalid'); return; }
+  scanned=true; document.getElementById('beep').play().catch(()=>{}); if(navigator.vibrate) navigator.vibrate(200);
+  showToast('Meja '+parsed.meja+' terdeteksi!'); document.getElementById('resultBox').classList.remove('hidden'); document.getElementById('resultText').textContent=parsed.raw; document.getElementById('resultMeja').textContent='→ Meja '+parsed.meja; const link=document.getElementById('resultLink'); link.href=parsed.url; localStorage.setItem('cafe_table',parsed.meja); addHistory(parsed.raw,'Meja '+parsed.meja); setTimeout(()=> location.href=parsed.url,1200); document.getElementById('scanStatus').textContent='Terdeteksi Meja '+parsed.meja; document.getElementById('scanStatus').className='text-[11px] font-bold px-2.5 py-1 bg-amber-600 rounded-full';
+}
+function addHistory(text,status){ const el=document.getElementById('history'); if(el.innerHTML.includes('Belum ada')) el.innerHTML=''; const time=new Date().toLocaleTimeString('id-ID'); el.innerHTML=`<div class="flex justify-between bg-white/5 border border-white/10 p-2.5 rounded-xl"><span class="truncate mr-2">${text}</span><span class="text-amber-400">${status} • ${time}</span></div>`+el.innerHTML; }
+function handleManual(){ const v=document.getElementById('manualInput').value.trim(); if(!v) return alert('Isi kode meja'); onScanSuccess(v); }
+function quickMeja(n){ document.getElementById('manualInput').value=n; handleManual(); }
+function continueScan(){ scanned=false; document.getElementById('resultBox').classList.add('hidden'); document.getElementById('scanStatus').textContent='Kamera Aktif'; document.getElementById('scanStatus').className='text-[11px] font-bold px-2.5 py-1 bg-emerald-600 rounded-full animate-pulse'; }
+async function initScanner(){ try{ html5QrCode=new Html5Qrcode("reader"); cameras=await Html5Qrcode.getCameras(); if(!cameras.length) throw new Error('No camera'); currentCamId=cameras[cameras.length-1].id; await startCam(currentCamId); }catch(err){ document.getElementById('reader').innerHTML=`<div class="p-10 text-center text-white/50"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i><p class="text-sm">Kamera tidak tersedia / butuh HTTPS</p><p class="text-xs mt-1">${err.message}</p></div>`; document.getElementById('scanStatus').textContent='Kamera Off'; document.getElementById('scanStatus').className='text-[11px] font-bold px-2.5 py-1 bg-red-600 rounded-full'; } }
+async function startCam(camId){ const config={fps:15, qrbox:{width:260,height:140}, aspectRatio:1.777, rememberLastUsedCamera:true}; await html5QrCode.start(camId,config,onScanSuccess,()=>{}); }
+async function switchCamera(){ if(cameras.length<2) return showToast('Hanya 1 kamera'); await html5QrCode.stop(); const idx=cameras.findIndex(c=>c.id===currentCamId); const next=cameras[(idx+1)%cameras.length]; currentCamId=next.id; await startCam(currentCamId); showToast('Kamera: '+next.label); }
+async function toggleTorch(){ try{ const cap=html5QrCode.getRunningTrackCapabilities(); if(!cap.torch) return showToast('Torch tidak support'); torchOn=!torchOn; await html5QrCode.applyVideoConstraints({advanced:[{torch:torchOn}]}); document.getElementById('torchBtn').innerHTML=torchOn?'<i class="fa-solid fa-lightbulb"></i> Torch ON':'<i class="fa-solid fa-lightbulb"></i> Torch'; document.getElementById('torchBtn').className=torchOn?'py-2.5 bg-amber-600 text-white rounded-xl text-sm font-semibold':'py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm font-semibold'; }catch(e){ showToast('Torch gagal'); } }
+initScanner(); document.getElementById('manualInput').addEventListener('keydown',e=>{ if(e.key==='Enter') handleManual(); });
+</script>
+</body>
+</html>

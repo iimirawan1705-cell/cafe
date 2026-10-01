@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>History Pesanan - CafeBar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="bg-[#fcfaf7] min-h-screen antialiased">
+<nav class="bg-white border-b sticky top-0 z-40">
+  <div class="max-w-6xl mx-auto px-4 h-[64px] flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white"><i class="fa-solid fa-clock-rotate-left"></i></div>
+      <div class="leading-none">
+        <h1 class="font-bold text-sm">History Pesanan</h1>
+        <p class="text-xs text-slate-500">Selesai diantar ke meja — tetap tersimpan</p>
+      </div>
+      <span id="historyCount" class="ml-2 bg-slate-900 text-white text-xs font-bold px-2.5 py-1 rounded-full">0</span>
+    </div>
+    <div class="flex gap-2">
+      <a href="admin.html" class="px-4 py-2 bg-white border rounded-full text-xs font-bold">Admin</a>
+      <a href="kitchen.html" class="px-4 py-2 bg-white border rounded-full text-xs font-bold">Dapur</a>
+      <a href="index.html" class="px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold">Generator</a>
+    </div>
+  </div>
+</nav>
+
+<div class="max-w-6xl mx-auto px-4 py-6">
+  <div class="grid md:grid-cols-4 gap-3 mb-6">
+    <div class="bg-white rounded-2xl p-4 border shadow-sm">
+      <p class="text-xs font-bold text-slate-500">Selesai Diantar</p>
+      <p id="hDone" class="text-2xl font-black">0</p>
+      <p class="text-xs text-emerald-600">Status done</p>
+    </div>
+    <div class="bg-emerald-600 text-white rounded-2xl p-4 shadow-sm">
+      <p class="text-xs opacity-80">Total Porsi</p>
+      <p id="hItems" class="text-2xl font-black">0</p>
+      <p class="text-xs opacity-80">Item terantar</p>
+    </div>
+    <div class="bg-slate-900 text-white rounded-2xl p-4 shadow-sm">
+      <p class="text-xs opacity-80">Omzet Selesai</p>
+      <p id="hOmzet" class="text-xl font-black">Rp 0</p>
+    </div>
+    <div class="bg-amber-600 text-white rounded-2xl p-4 shadow-sm">
+      <p class="text-xs opacity-80">Meja Terlayani</p>
+      <p id="hTables" class="text-2xl font-black">0</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-[20px] border shadow-sm p-4 mb-4 flex flex-wrap gap-2 items-center">
+    <div class="relative">
+      <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+      <input id="searchHistory" placeholder="Cari ID / meja / nama / menu..." class="pl-8 pr-4 py-2 border rounded-full text-sm w-64">
+    </div>
+    <select id="filterPay" class="px-3 py-2 border rounded-full text-sm bg-white">
+      <option value="all">Semua Pembayaran</option>
+      <option value="cash">Bayar di Kasir</option>
+      <option value="qris">QRIS</option>
+      <option value="transfer">Transfer</option>
+      <option value="ewallet">E-Wallet</option>
+    </select>
+    <input type="date" id="filterDate" class="px-3 py-2 border rounded-full text-sm">
+    <button onclick="clearFilter()" class="px-3 py-2 bg-slate-100 rounded-full text-xs font-bold">Reset</button>
+    <div class="ml-auto flex gap-2">
+      <button onclick="exportHistory()" class="px-4 py-2 bg-white border rounded-full text-xs font-bold"><i class="fa-solid fa-download"></i> Export</button>
+      <button onclick="clearHistory()" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-full text-xs font-bold">Hapus History</button>
+    </div>
+  </div>
+
+  <div id="historyList" class="space-y-3"></div>
+  <p class="text-center text-xs text-slate-400 mt-6">History hanya untuk pesanan <b>done (selesai diantar)</b> — pending/cooking/ready tetap di Admin/Dapur</p>
+</div>
+
+<script>
+function getOrders(){ return JSON.parse(localStorage.getItem('cafe_orders')||'[]'); }
+function payIcon(p){ return p==='qris'?'fa-qrcode':p==='transfer'?'fa-building-columns':p==='ewallet'?'fa-wallet':'fa-money-bill-wave'; }
+
+function renderHistory(){
+  const all=getOrders().filter(o=>o.status==='done');
+  document.getElementById('historyCount').textContent=all.length;
+  document.getElementById('hDone').textContent=all.length;
+  document.getElementById('hItems').textContent=all.reduce((s,o)=>s+o.items.reduce((a,i)=>a+i.qty,0),0);
+  document.getElementById('hOmzet').textContent='Rp '+all.reduce((s,o)=>s+o.total,0).toLocaleString('id-ID');
+  document.getElementById('hTables').textContent=[...new Set(all.map(o=>o.table))].length;
+
+  const q=(document.getElementById('searchHistory').value||'').toLowerCase();
+  const payF=document.getElementById('filterPay').value;
+  const dateF=document.getElementById('filterDate').value;
+
+  let filtered=all;
+  if(q) filtered=filtered.filter(o=> `${o.id} ${o.table} ${o.customer} ${o.items.map(i=>i.name).join(' ')}`.toLowerCase().includes(q));
+  if(payF!=='all') filtered=filtered.filter(o=>o.payment===payF);
+  if(dateF) filtered=filtered.filter(o=> o.time.includes(dateF.split('-').reverse().join('/')) || new Date(o.timestamp).toLocaleDateString('id-ID')===new Date(dateF).toLocaleDateString('id-ID'));
+
+  const list=document.getElementById('historyList');
+  if(!filtered.length){
+    list.innerHTML=`<div class="bg-white border rounded-2xl p-10 text-center"><i class="fa-solid fa-clock-rotate-left text-3xl text-slate-300"></i><p class="font-bold mt-2">Belum ada history</p><p class="text-xs text-slate-500">Pesanan yang sudah klik <b>Selesai / Antar ke Meja</b> di dapur/admin akan muncul di sini</p></div>`;
+    return;
+  }
+  list.innerHTML=filtered.map(o=>`
+    <div class="bg-white rounded-2xl border p-4 shadow-sm">
+      <div class="flex flex-wrap gap-2 items-center justify-between">
+        <div class="flex gap-2 items-center flex-wrap">
+          <span class="bg-emerald-600 text-white text-xs px-2.5 py-1 rounded-full font-black"><i class="fa-solid fa-check"></i> SELESAI</span>
+          <span class="bg-slate-900 text-white text-xs px-2.5 py-1 rounded-full font-black">MEJA ${o.table}</span>
+          <span class="text-xs font-bold">${o.id}</span>
+          <span class="text-xs bg-slate-100 border px-2 py-1 rounded-full font-bold"><i class="fa-solid ${payIcon(o.payment)}"></i> ${o.paymentLabel||'Cash'}</span>
+        </div>
+        <span class="font-black text-emerald-700">Rp ${o.total.toLocaleString('id-ID')}</span>
+      </div>
+      <p class="text-xs text-slate-500 mt-1">${o.time} • ${o.customer} • ${o.items.length} item</p>
+      <div class="mt-3 grid sm:grid-cols-2 gap-1.5">${o.items.map(i=>`<div class="flex justify-between text-sm bg-slate-50 border px-3 py-2 rounded-xl"><span>${i.qty}x ${i.name}</span><span class="font-bold">Rp ${(i.price*i.qty).toLocaleString('id-ID')}</span></div>`).join('')}</div>
+      ${o.note?`<div class="mt-2 text-xs bg-amber-50 border border-amber-200 p-2 rounded-xl"><b>Catatan:</b> ${o.note}</div>`:''}
+      <div class="flex gap-2 mt-3">
+        <button onclick="reopenOrder('${o.id}')" class="px-3 py-1.5 bg-white border rounded-full text-xs font-bold">Kembalikan ke Pending</button>
+        <button onclick="printStruk('${o.id}')" class="px-3 py-1.5 bg-white border rounded-full text-xs"><i class="fa-solid fa-print"></i> Struk</button>
+        <button onclick="deleteHistory('${o.id}')" class="ml-auto px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-full text-xs">Hapus</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function clearFilter(){ document.getElementById('searchHistory').value=''; document.getElementById('filterPay').value='all'; document.getElementById('filterDate').value=''; renderHistory(); }
+function deleteHistory(id){ if(!confirm('Hapus history '+id+'?')) return; const orders=getOrders().filter(o=>o.id!==id); localStorage.setItem('cafe_orders', JSON.stringify(orders)); renderHistory(); }
+function clearHistory(){ if(!confirm('Hapus SEMUA history (status done)?')) return; const keep=getOrders().filter(o=>o.status!=='done'); localStorage.setItem('cafe_orders', JSON.stringify(keep)); renderHistory(); }
+function reopenOrder(id){ const orders=getOrders(); const o=orders.find(x=>x.id===id); if(o){ o.status='pending'; localStorage.setItem('cafe_orders', JSON.stringify(orders)); alert('Order '+id+' dikembalikan ke pending'); renderHistory(); } }
+function printStruk(id){ const o=getOrders().find(x=>x.id===id); if(!o) return; const w=window.open('','_blank'); w.document.write(`<html><head><title>Struk ${o.id}</title><style>body{font-family:monospace;max-width:320px;margin:auto;padding:16px} h2{text-align:center} .line{border-top:1px dashed #000;margin:8px 0} table{width:100%;font-size:13px}</style></head><body><h2>${localStorage.getItem('cafe_name')||'CafeBar'}</h2><p style="text-align:center;font-size:12px">Meja ${o.table} • ${o.time}<br>${o.id} • ${o.customer}<br>${o.paymentLabel||''}</p><div class="line"></div><table>${o.items.map(i=>`<tr><td>${i.qty}x ${i.name}</td><td style="text-align:right">Rp ${(i.price*i.qty).toLocaleString('id-ID')}</td></tr>`).join('')}</table><div class="line"></div><table><tr><td><b>Total</b></td><td style="text-align:right"><b>Rp ${o.total.toLocaleString('id-ID')}</b></td></tr></table><div class="line"></div><p style="text-align:center;font-size:11px">Terima kasih — History</p><script>window.print();<\/script></body></html>`); }
+function exportHistory(){
+  const data=getOrders().filter(o=>o.status==='done');
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='history-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+
+document.getElementById('searchHistory').addEventListener('input', renderHistory);
+document.getElementById('filterPay').addEventListener('change', renderHistory);
+document.getElementById('filterDate').addEventListener('change', renderHistory);
+renderHistory();
+setInterval(renderHistory, 2000);
+try{ const bc=new BroadcastChannel('cafe'); bc.onmessage=renderHistory; }catch(e){}
+window.addEventListener('storage', e=>{ if(e.key==='cafe_orders') renderHistory(); });
+</script>
+</body>
+</html>

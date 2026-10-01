@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - CafeBar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+@keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+.notif-enter { animation: slideIn 0.35s ease; }
+@keyframes pulseRing { 0%{transform:scale(0.9); opacity:1} 100%{transform:scale(1.4); opacity:0} }
+</style>
+</head>
+<body class="bg-[#fcfaf7] min-h-screen antialiased">
+<nav class="bg-white border-b sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-4 h-[64px] flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white"><i class="fa-solid fa-chart-line"></i></div>
+      <div class="leading-none">
+        <h1 class="font-bold text-sm">Admin Panel</h1>
+        <p class="text-xs text-slate-500 flex items-center gap-1.5"><span class="relative flex h-2 w-2"><span id="livePulse" class="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span> Live • Notifikasi Order Aktif</p>
+      </div>
+      <span id="pendingBadge" class="hidden ml-2 bg-amber-600 text-white text-xs font-black px-2.5 py-1 rounded-full">0 pending</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="enableNotifBtn" onclick="enableNotif()" class="hidden md:inline-flex items-center gap-1.5 px-3 py-2 bg-amber-100 text-amber-800 border border-amber-200 rounded-full text-xs font-bold"><i class="fa-solid fa-bell"></i> Aktifkan Notif</button>
+      <button onclick="toggleSound()" id="soundToggle" class="px-3 py-2 bg-emerald-600 text-white rounded-full text-xs font-bold"><i class="fa-solid fa-volume-high"></i> <span class="hidden sm:inline">Suara ON</span></button>
+      <a href="index.html" class="hidden sm:inline-flex px-3 py-2 bg-white border rounded-full text-xs font-semibold">Generator</a>
+      <a href="history.html" class="px-3.5 py-2 bg-emerald-600 text-white rounded-full text-xs font-bold"><i class="fa-solid fa-clock-rotate-left mr-1"></i> History</a>
+      <a href="kitchen.html" class="px-3.5 py-2 bg-slate-900 text-white rounded-full text-xs font-bold">Dapur</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Notif Stack -->
+<div id="notifStack" class="fixed top-[72px] right-4 z-50 w-[360px] max-w-[92vw] space-y-2 pointer-events-none"></div>
+<!-- Sound test banner -->
+<div id="soundBanner" class="max-w-7xl mx-auto px-4 mt-3 hidden">
+  <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+    <p class="text-xs text-amber-800"><i class="fa-solid fa-triangle-exclamation"></i> Klik untuk aktifkan suara & notifikasi desktop agar order baru berbunyi otomatis</p>
+    <button onclick="enableNotif()" class="px-4 py-1.5 bg-amber-600 text-white rounded-full text-xs font-bold shrink-0">Aktifkan</button>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 py-6">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div class="bg-white rounded-2xl p-4 border shadow-sm">
+      <p class="text-xs font-semibold text-slate-500">Total Order</p>
+      <p id="sTotal" class="text-2xl font-black">0</p>
+      <p class="text-[11px] text-emerald-600">Semua status</p>
+    </div>
+    <div class="bg-amber-600 text-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
+      <p class="text-xs opacity-90">Pending</p>
+      <p id="sPending" class="text-2xl font-black">0</p>
+      <p class="text-[11px] opacity-80">Butuh diproses • <span id="pendingNotifHint">notif on</span></p>
+      <i class="fa-solid fa-bell absolute -right-2 -bottom-2 text-5xl opacity-10"></i>
+    </div>
+    <div class="bg-blue-600 text-white rounded-2xl p-4 shadow-sm">
+      <p class="text-xs opacity-90">Dimasak</p>
+      <p id="sCooking" class="text-2xl font-black">0</p>
+      <p class="text-[11px] opacity-80">Sedang cooking</p>
+    </div>
+    <div class="bg-emerald-600 text-white rounded-2xl p-4 shadow-sm">
+      <p class="text-xs opacity-90">Omzet</p>
+      <p id="sOmzet" class="text-xl font-black">Rp 0</p>
+      <p class="text-[11px] opacity-80">Hari ini</p>
+    </div>
+  </div>
+
+  <!-- Tabs + Legend -->
+  <div class="flex flex-wrap gap-2 mb-4 border-b pb-3 items-center">
+    <button onclick="switchTab('orders')" id="tabBtnOrders" class="px-5 py-2.5 bg-slate-900 text-white rounded-full text-sm font-bold" title="Lihat order masuk dari pelanggan"><i class="fa-solid fa-receipt mr-1"></i> Daftar Orderan</button>
+    <button onclick="switchTab('menu')" id="tabBtnMenu" class="px-5 py-2.5 bg-white border rounded-full text-sm font-bold text-slate-700" title="Tambah/edit daftar makanan & minuman"><i class="fa-solid fa-utensils mr-1"></i> Kelola Menu / Produk <span id="menuCountBadge" class="ml-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs">0</span></button>
+    <div class="hidden lg:flex items-center gap-1.5 ml-2 text-[11px]">
+      <span class="w-2 h-2 bg-amber-500 rounded-full"></span> Pending = baru masuk
+      <span class="w-2 h-2 bg-blue-500 rounded-full ml-2"></span> Dimasak
+      <span class="w-2 h-2 bg-emerald-500 rounded-full ml-2"></span> Siap antar
+    </div>
+    <span class="ml-auto flex items-center gap-2">
+      <button onclick="document.getElementById('adminHelp').classList.remove('hidden')" class="px-3 py-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-bold"><i class="fa-solid fa-circle-question"></i> Bantuan</button>
+      <button onclick="playSound(true)" class="px-3 py-2 bg-white border rounded-full text-xs font-bold hover:bg-slate-50"><i class="fa-solid fa-bell"></i> Test Notif</button>
+    </span>
+  </div>
+  <div id="adminHelp" class="hidden bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4">
+    <div class="flex justify-between items-start gap-4">
+      <div class="text-xs leading-relaxed text-blue-900">
+        <b>Cara pakai Admin (sederhana):</b><br>
+        1. Saat pelanggan pesan, ada <b>suara + popup</b> dan order muncul dengan label <b>PENDING</b> (kuning).<br>
+        2. Klik <b>Masak</b> → status jadi <b>COOKING</b> (biru), dapur lihat.<br>
+        3. Klik <b>Siap</b> → pelayan antar ke meja.<br>
+        4. Klik <b>Selesai</b> → order selesai & masuk omzet.
+      </div>
+      <button onclick="this.parentElement.parentElement.classList.add('hidden')" class="w-8 h-8 bg-white border rounded-full shrink-0"><i class="fa-solid fa-xmark text-xs"></i></button>
+    </div>
+  </div>
+
+  <!-- Tab: Orders -->
+  <div id="tabOrders" class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+      <div class="flex flex-wrap gap-2 mb-3 items-center">
+        <h2 class="font-bold text-sm">Orderan Masuk <span id="newDot" class="hidden w-2 h-2 bg-red-500 rounded-full inline-block animate-pulse"></span></h2>
+        <select id="filterStatus" class="ml-auto px-3 py-2 border rounded-full text-sm bg-white font-medium">
+          <option value="all">Semua Status</option>
+          <option value="pending">Pending</option>
+          <option value="cooking">Cooking</option>
+          <option value="ready">Ready</option>
+          <option value="done">Done</option>
+        </select>
+        <select id="filterTable" class="px-3 py-2 border rounded-full text-sm bg-white font-medium"><option value="all">Semua Meja</option></select>
+      </div>
+      <div id="orderList" class="space-y-3"></div>
+    </div>
+    <div class="space-y-4">
+      <div class="bg-white rounded-2xl p-4 border shadow-sm">
+        <h3 class="font-bold text-sm">Log Aktivitas</h3>
+        <div id="log" class="mt-2 text-xs text-slate-500 space-y-1 max-h-[280px] overflow-auto"></div>
+        <button onclick="clearOrders()" class="w-full mt-3 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-bold">Hapus Semua Order</button>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+        <p class="text-xs font-bold text-amber-800"><i class="fa-solid fa-lightbulb"></i> Kelola Produk</p>
+        <p class="text-xs text-amber-700/80 mt-1">Tambah / edit menu sekarang ada di tab <b>Kelola Menu / Produk</b> di atas — lebih luas & rapi.</p>
+        <button onclick="switchTab('menu')" class="w-full mt-2 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold">Buka Kelola Menu →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Menu / Produk (penempatan baru) -->
+  <div id="tabMenu" class="hidden">
+    <div class="bg-white rounded-[20px] border shadow-sm overflow-hidden">
+      <div class="bg-slate-900 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-bold flex items-center gap-2"><i class="fa-solid fa-utensils text-amber-400"></i> Tambah Menu / Produk Baru</h3>
+          <p class="text-xs text-white/60 mt-1">Penempatan baru: form di atas, daftar produk di bawah — lebih rapi & mudah diisi</p>
+        </div>
+        <span class="text-xs bg-white/10 border border-white/20 px-3 py-1 rounded-full">Auto tampil di menu pelanggan</span>
+      </div>
+      <div class="p-6">
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-bold text-slate-700">Nama Menu / Produk <span class="text-red-500">*</span></label>
+            <input id="mName" placeholder="Contoh: Kopi Susu Gula Aren" class="w-full mt-1.5 px-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700">Harga (Rp) <span class="text-red-500">*</span></label>
+              <input id="mPrice" type="number" placeholder="25000" class="w-full mt-1.5 px-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700">Kategori</label>
+              <select id="mCat" class="w-full mt-1.5 px-4 py-3 border rounded-xl text-sm bg-white"><option value="kopi">Kopi</option><option value="nonkopi">Non-Kopi</option><option value="makanan">Makanan</option><option value="snack">Snack</option></select>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-700">Upload Gambar <span class="text-slate-400 font-normal">(atau URL)</span></label>
+            <input type="file" id="mFile" accept="image/*" onchange="handleFileUpload(this)" class="w-full mt-1.5 px-3 py-2 border rounded-xl text-sm bg-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-amber-600 file:text-white file:text-xs file:font-bold">
+            <input id="mImg" placeholder="https://.../gambar.jpg (opsional)" class="w-full mt-2 px-4 py-2.5 border rounded-xl text-sm bg-slate-50">
+            <p class="text-[11px] text-slate-400 mt-1">Pilih file / tempel URL — file diutamakan</p>
+            <div id="imgPreviewWrap" class="hidden mt-2 flex items-center gap-2 bg-slate-50 border rounded-xl p-2">
+              <img id="imgPreview" src="" class="w-14 h-14 rounded-lg object-cover border">
+              <div class="flex-1 min-w-0"><p class="text-xs font-bold truncate" id="previewName">preview.jpg</p><p class="text-[11px] text-slate-500" id="previewSize"></p></div>
+              <button onclick="clearUpload()" class="w-7 h-7 bg-white border rounded-full text-xs"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-700">Deskripsi Singkat</label>
+            <input id="mDesc" placeholder="Espresso + susu + gula aren legit" class="w-full mt-1.5 px-4 py-3 border rounded-xl text-sm">
+          </div>
+        </div>
+        <div class="flex gap-2 mt-4">
+          <button id="btnSubmitMenu" onclick="addMenu()" class="flex-1 md:flex-none px-8 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-sm font-bold"><i class="fa-solid fa-plus mr-1"></i> <span id="btnSubmitText">Tambah Produk ke Menu</span></button>
+          <button id="btnCancelEdit" onclick="cancelEdit()" class="hidden px-6 py-3 bg-white border rounded-xl text-sm font-bold">Batal</button>
+        </div>
+        <p id="editHint" class="hidden text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-3"><i class="fa-solid fa-pen"></i> Sedang mengubah: <span id="editName"></span></p>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <h4 class="font-bold text-sm mb-3 flex items-center gap-2">Daftar Produk <span id="menuCountInline" class="bg-slate-900 text-white text-xs px-2 py-0.5 rounded-full">0</span></h4>
+      <div id="menuList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+    </div>
+  </div>
+</div>
+
+<audio id="notifSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=notification-sound-7062.mp3" preload="auto"></audio>
+<audio id="notifSound2" src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_1fb7111783.mp3?filename=positive-notification-95240.mp3" preload="auto"></audio>
+
+<script>
+let soundOn = localStorage.getItem('cafe_sound') !== 'off';
+let notifPermitted = Notification && Notification.permission === 'granted';
+
+function updateSoundUI(){
+  const btn=document.getElementById('soundToggle');
+  if(!btn) return;
+  btn.innerHTML = soundOn ? '<i class="fa-solid fa-volume-high"></i> <span class="hidden sm:inline">Suara ON</span>' : '<i class="fa-solid fa-volume-xmark"></i> <span class="hidden sm:inline">Suara OFF</span>';
+  btn.className = soundOn ? 'px-3 py-2 bg-emerald-600 text-white rounded-full text-xs font-bold' : 'px-3 py-2 bg-slate-200 text-slate-600 rounded-full text-xs font-bold';
+  document.getElementById('pendingNotifHint').textContent = soundOn ? 'notif on' : 'notif off';
+  const banner=document.getElementById('soundBanner');
+  if(!soundOn || !notifPermitted) banner.classList.remove('hidden'); else banner.classList.add('hidden');
+  const enBtn=document.getElementById('enableNotifBtn');
+  if(notifPermitted) enBtn.classList.add('hidden'); else enBtn.classList.remove('hidden');
+}
+updateSoundUI();
+
+function toggleSound(){ soundOn=!soundOn; localStorage.setItem('cafe_sound', soundOn?'on':'off'); updateSoundUI(); if(soundOn) playSound(true); }
+
+async function enableNotif(){
+  soundOn=true; localStorage.setItem('cafe_sound','on');
+  try{ if(Notification && Notification.permission!=='granted'){ await Notification.requestPermission(); } }catch(e){}
+  notifPermitted = Notification && Notification.permission==='granted';
+  updateSoundUI();
+  playSound(true);
+  addLog('Notifikasi diaktifkan');
+}
+
+function getOrders(){ return JSON.parse(localStorage.getItem('cafe_orders')||'[]'); }
+function saveOrders(o){ localStorage.setItem('cafe_orders', JSON.stringify(o)); try{new BroadcastChannel('cafe').postMessage({type:'update', orders:o})}catch(e){} }
+function getMenu(){ return JSON.parse(localStorage.getItem('cafe_menu')||'[]'); }
+function switchTab(tab){
+  const isOrders = tab==='orders';
+  document.getElementById('tabOrders').classList.toggle('hidden', !isOrders);
+  document.getElementById('tabMenu').classList.toggle('hidden', isOrders);
+  document.getElementById('tabBtnOrders').className = isOrders ? 'px-5 py-2.5 bg-slate-900 text-white rounded-full text-sm font-bold' : 'px-5 py-2.5 bg-white border rounded-full text-sm font-bold text-slate-700';
+  document.getElementById('tabBtnMenu').className = !isOrders ? 'px-5 py-2.5 bg-slate-900 text-white rounded-full text-sm font-bold' : 'px-5 py-2.5 bg-white border rounded-full text-sm font-bold text-slate-700';
+}
+
+function playSound(isTest=false){
+  if(!soundOn && !isTest) return;
+  const a=document.getElementById('notifSound');
+  const b=document.getElementById('notifSound2');
+  a.currentTime=0; a.volume=0.9; a.play().catch(()=>{});
+  setTimeout(()=>{ b.currentTime=0; b.volume=0.9; b.play().catch(()=>{}); }, 350);
+  if(navigator.vibrate) navigator.vibrate([200,100,200]);
+}
+
+function payIcon(p){ return p==='qris' ? 'fa-qrcode' : p==='transfer' ? 'fa-building-columns' : p==='ewallet' ? 'fa-wallet' : 'fa-money-bill-wave'; }
+function pushDesktopNotif(o){
+  if(!notifPermitted) return;
+  try{
+    const n=new Notification('🔔 Order Baru — Meja '+o.table, {
+      body: `${o.id} • ${o.customer} • ${o.paymentLabel||'Cash'}\n${o.items.map(i=>i.qty+'x '+i.name).join(', ')}\nRp ${o.total.toLocaleString('id-ID')}`,
+      icon: 'https://cdn-icons-png.flaticon.com/512/3176/3176298.png',
+      requireInteraction: true
+    });
+    n.onclick=()=>{ window.focus(); n.close(); document.getElementById('filterStatus').value='pending'; render(); };
+    setTimeout(()=>n.close(), 8000);
+  }catch(e){}
+}
+
+function showToastNotif(o){
+  const stack=document.getElementById('notifStack');
+  const el=document.createElement('div');
+  el.className='notif-enter pointer-events-auto bg-slate-900 text-white rounded-2xl shadow-2xl border border-white/10 p-4 flex gap-3';
+  el.innerHTML=`
+    <div class="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-bell"></i></div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <span class="bg-amber-600 text-white text-[11px] font-black px-2 py-0.5 rounded-full">MEJA ${o.table}</span>
+        <span class="text-xs font-bold">${o.id}</span>
+        <span class="ml-auto text-[11px] bg-emerald-600 px-2 py-0.5 rounded-full">BARU</span>
+      </div>
+      <p class="text-sm font-bold mt-1">${o.customer} • ${o.items.length} item • Rp ${o.total.toLocaleString('id-ID')}</p>
+      <p class="text-xs text-white/70 truncate">${o.items.map(i=>i.qty+'x '+i.name).join(', ')}</p>
+      <p class="text-xs mt-1"><span class="bg-white/15 border border-white/20 px-2 py-0.5 rounded-full"><i class="fa-solid ${payIcon(o.payment)}"></i> ${o.paymentLabel||'Bayar di Kasir'}</span></p>
+      ${o.note?`<p class="text-xs bg-white/10 rounded-lg px-2 py-1 mt-1">Catatan: ${o.note}</p>`:''}
+      <div class="flex gap-2 mt-2">
+        <button onclick="this.closest('.notif-enter').remove(); document.getElementById('filterStatus').value='pending'; render(); window.scrollTo({top:0,behavior:'smooth'})" class="flex-1 py-1.5 bg-white text-slate-900 rounded-full text-xs font-bold">Lihat Order</button>
+        <button onclick="this.closest('.notif-enter').remove()" class="px-3 py-1.5 bg-white/10 rounded-full text-xs">Tutup</button>
+      </div>
+    </div>
+  `;
+  stack.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(100%)'; setTimeout(()=>el.remove(),400); }, 7000);
+}
+
+// detection
+let lastIds = new Set(getOrders().map(o=>o.id));
+let lastCount = getOrders().length;
+let titleOrig = document.title;
+let blinkTimer=null;
+
+function triggerNewOrder(o){
+  playSound();
+  pushDesktopNotif(o);
+  showToastNotif(o);
+  addLog('🔔 Order baru masuk! '+o.id+' Meja '+o.table+' — '+o.customer+' • '+(o.paymentLabel||'Cash'));
+  // title blink
+  let on=true;
+  clearInterval(blinkTimer);
+  let c=0;
+  blinkTimer=setInterval(()=>{
+    document.title = on ? `🔔 (${getOrders().filter(x=>x.status==='pending').length}) Order Baru!` : titleOrig;
+    on=!on; if(++c>10){ clearInterval(blinkTimer); document.title=titleOrig; }
+  }, 700);
+  // badge
+  document.getElementById('newDot').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('newDot').classList.add('hidden'), 5000);
+}
+
+function render(){
+  const orders=getOrders();
+  const filterS=document.getElementById('filterStatus').value;
+  const filterT=document.getElementById('filterTable').value;
+  document.getElementById('sTotal').textContent=orders.length;
+  const pend=orders.filter(o=>o.status==='pending').length;
+  document.getElementById('sPending').textContent=pend;
+  document.getElementById('sCooking').textContent=orders.filter(o=>o.status==='cooking').length;
+  document.getElementById('sOmzet').textContent='Rp '+orders.reduce((s,o)=>s+o.total,0).toLocaleString('id-ID');
+  const badge=document.getElementById('pendingBadge');
+  if(pend>0){ badge.textContent=pend+' pending'; badge.classList.remove('hidden'); } else badge.classList.add('hidden');
+  // table filter
+  const tables=[...new Set(orders.map(o=>o.table))].sort((a,b)=>a-b);
+  const sel=document.getElementById('filterTable'); const cur=sel.value;
+  sel.innerHTML='<option value="all">Semua Meja</option>'+tables.map(t=>`<option value="${t}">Meja ${t}</option>`).join('');
+  sel.value=cur;
+  let filtered=orders;
+  if(filterS!=='all') filtered=filtered.filter(o=>o.status===filterS);
+  if(filterT!=='all') filtered=filtered.filter(o=>String(o.table)===String(filterT));
+  const list=document.getElementById('orderList');
+  if(!filtered.length) list.innerHTML='<div class="bg-white border rounded-2xl p-10 text-center text-slate-500">Belum ada orderan</div>';
+  else list.innerHTML=filtered.map(o=>{
+    const isNew = !lastIds.has(o.id) && o.status==='pending';
+    return `<div class="bg-white rounded-2xl border p-4 shadow-sm ${isNew?'ring-2 ring-amber-400':''} ${o.status==='pending'?'border-amber-200':''}">
+      <div class="flex justify-between items-start">
+        <div><div class="flex flex-wrap gap-2 items-center"><span class="bg-slate-900 text-white text-xs px-2.5 py-1 rounded-full font-black">MEJA ${o.table}</span><span class="text-xs font-bold">${o.id}</span><span class="text-[11px] px-2 py-1 rounded-full font-bold ${o.status==='pending'?'bg-amber-100 text-amber-700 animate-pulse':o.status==='cooking'?'bg-blue-100 text-blue-700':o.status==='ready'?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-600'}">${o.status.toUpperCase()}</span><span class="text-[11px] bg-slate-100 border px-2 py-1 rounded-full font-bold"><i class="fa-solid ${payIcon(o.payment)}"></i> ${o.paymentLabel||'Bayar di Kasir'}</span>${isNew?'<span class="text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded-full font-black">NEW</span>':''}</div><p class="text-xs text-slate-500 mt-1">${o.time} • ${o.customer} • ${o.items.length} item</p></div><span class="font-black text-amber-700">Rp ${o.total.toLocaleString('id-ID')}</span>
+      </div>
+      <div class="mt-3 space-y-1">${o.items.map(i=>`<div class="flex justify-between text-sm bg-slate-50 px-3 py-2 rounded-xl"><span>${i.qty}x ${i.name}</span><span class="font-bold">Rp ${(i.price*i.qty).toLocaleString('id-ID')}</span></div>`).join('')}</div>
+      ${o.note?`<div class="mt-2 text-xs bg-amber-50 border border-amber-200 p-2.5 rounded-xl"><b>Catatan:</b> ${o.note}</div>`:''}
+      <div class="grid grid-cols-4 gap-1.5 mt-3">
+        <button onclick="updateStatus('${o.id}','pending')" class="py-2 rounded-xl text-xs font-bold ${o.status==='pending'?'bg-amber-600 text-white':'bg-white border'}">Pending</button>
+        <button onclick="updateStatus('${o.id}','cooking')" class="py-2 rounded-xl text-xs font-bold ${o.status==='cooking'?'bg-blue-600 text-white':'bg-white border'}">Masak</button>
+        <button onclick="updateStatus('${o.id}','ready')" class="py-2 rounded-xl text-xs font-bold ${o.status==='ready'?'bg-emerald-600 text-white':'bg-white border'}">Siap</button>
+        <button onclick="updateStatus('${o.id}','done')" class="py-2 rounded-xl text-xs font-bold ${o.status==='done'?'bg-slate-900 text-white':'bg-white border'}">Selesai</button>
+      </div>
+      <div class="flex gap-2 mt-2"><button onclick="printStruk('${o.id}')" class="flex-1 py-2 bg-white border rounded-xl text-xs font-bold"><i class="fa-solid fa-print"></i> Struk</button><button onclick="deleteOrder('${o.id}')" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-bold">Hapus</button></div>
+    </div>`
+  }).join('');
+  // menu list + badges
+  const menu=getMenu();
+  const menuBadge=document.getElementById('menuCountBadge'); if(menuBadge) menuBadge.textContent=menu.length;
+  const inline=document.getElementById('menuCountInline'); if(inline) inline.textContent=menu.length;
+  document.getElementById('menuList').innerHTML=menu.map(m=>`<div class="flex gap-3 items-center bg-white border p-3 rounded-2xl shadow-sm hover:shadow-md transition"><img src="${m.img}" class="w-14 h-14 rounded-xl object-cover"><div class="flex-1 min-w-0"><p class="text-sm font-bold truncate">${m.name}</p><p class="text-xs text-slate-500">Rp ${m.price.toLocaleString('id-ID')} • ${m.cat}</p><p class="text-[11px] text-slate-400 truncate">${m.desc||''}</p></div><div class="flex gap-1.5"><button onclick="editMenu(${m.id})" class="w-8 h-8 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs" title="Ubah"><i class="fa-solid fa-pen"></i></button><button onclick="deleteMenu(${m.id})" class="w-8 h-8 bg-red-50 text-red-600 border border-red-200 rounded-full text-xs" title="Hapus"><i class="fa-solid fa-trash"></i></button></div></div>`).join('');
+  // detect new orders
+  const newOnes=orders.filter(o=>!lastIds.has(o.id));
+  if(newOnes.length){
+    newOnes.reverse().forEach(o=> triggerNewOrder(o));
+    lastIds=new Set(orders.map(o=>o.id));
+  }
+  lastCount=orders.length;
+}
+
+function updateStatus(id,status){ const orders=getOrders(); const o=orders.find(x=>x.id===id); if(o){ o.status=status; saveOrders(orders); addLog(`${id} → ${status}`); render(); } }
+function deleteOrder(id){ if(!confirm('Hapus '+id+'?')) return; saveOrders(getOrders().filter(o=>o.id!==id)); render(); }
+function clearOrders(){ if(!confirm('Hapus SEMUA order?')) return; localStorage.removeItem('cafe_orders'); lastIds=new Set(); render(); addLog('Semua order dihapus'); }
+function addLog(msg){ const el=document.getElementById('log'); el.innerHTML=`<div>[${new Date().toLocaleTimeString('id-ID')}] ${msg}</div>`+el.innerHTML; }
+let editingId=null;
+let uploadedDataUrl=null;
+function handleFileUpload(input){
+  const file=input.files[0]; if(!file) return;
+  if(file.size > 800*1024){ alert('Gambar maksimal 800KB biar tidak penuh storage. Kompres dulu ya.'); input.value=''; return; }
+  const reader=new FileReader();
+  reader.onload=e=>{
+    uploadedDataUrl=e.target.result;
+    document.getElementById('mImg').value='';
+    document.getElementById('imgPreview').src=uploadedDataUrl;
+    document.getElementById('previewName').textContent=file.name;
+    document.getElementById('previewSize').textContent=(file.size/1024).toFixed(0)+' KB • siap disimpan';
+    document.getElementById('imgPreviewWrap').classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+}
+function clearUpload(){
+  uploadedDataUrl=null;
+  document.getElementById('mFile').value='';
+  document.getElementById('imgPreviewWrap').classList.add('hidden');
+  document.getElementById('imgPreview').src='';
+}
+function editMenu(id){
+  const m=getMenu().find(x=>x.id===id); if(!m) return;
+  editingId=id;
+  document.getElementById('mName').value=m.name;
+  document.getElementById('mPrice').value=m.price;
+  document.getElementById('mCat').value=m.cat;
+  if(m.img && m.img.startsWith('data:image')){
+    uploadedDataUrl=m.img;
+    document.getElementById('mImg').value='';
+    document.getElementById('imgPreview').src=m.img;
+    document.getElementById('previewName').textContent='gambar tersimpan';
+    document.getElementById('previewSize').textContent='base64 • siap ubah';
+    document.getElementById('imgPreviewWrap').classList.remove('hidden');
+  } else {
+    clearUpload();
+    document.getElementById('mImg').value=m.img;
+  }
+  document.getElementById('mDesc').value=m.desc||'';
+  document.getElementById('btnSubmitText').textContent='Simpan Perubahan';
+  document.getElementById('btnSubmitMenu').className='flex-1 md:flex-none px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold';
+  document.getElementById('btnCancelEdit').classList.remove('hidden');
+  document.getElementById('editHint').classList.remove('hidden');
+  document.getElementById('editName').textContent=m.name;
+  document.getElementById('mName').focus();
+  window.scrollTo({top:0, behavior:'smooth'});
+  // switch to menu tab if needed
+  switchTab('menu');
+}
+function cancelEdit(){
+  editingId=null; clearUpload();
+  document.getElementById('mName').value=''; document.getElementById('mPrice').value=''; document.getElementById('mImg').value=''; document.getElementById('mDesc').value='';
+  document.getElementById('btnSubmitText').textContent='Tambah Produk ke Menu';
+  document.getElementById('btnSubmitMenu').className='flex-1 md:flex-none px-8 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-sm font-bold';
+  document.getElementById('btnCancelEdit').classList.add('hidden');
+  document.getElementById('editHint').classList.add('hidden');
+}
+function addMenu(){
+  const name=document.getElementById('mName').value.trim(); const price=parseInt(document.getElementById('mPrice').value); const cat=document.getElementById('mCat').value; let img=uploadedDataUrl || document.getElementById('mImg').value.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'; const desc=document.getElementById('mDesc').value.trim()||name; if(!name||!price) return alert('Nama & harga wajib');
+  let menu=getMenu();
+  if(editingId){
+    const idx=menu.findIndex(x=>x.id===editingId);
+    if(idx!==-1){ menu[idx]={...menu[idx], name, price, cat, img, desc}; localStorage.setItem('cafe_menu', JSON.stringify(menu)); addLog('Menu diubah: '+name); cancelEdit(); render(); return; }
+  }
+  menu.unshift({id:Date.now(), name, price, cat, img, desc}); localStorage.setItem('cafe_menu', JSON.stringify(menu)); cancelEdit(); render(); addLog('Menu ditambah: '+name);
+}
+function deleteMenu(id){ if(!confirm('Hapus menu?')) return; if(editingId===id) cancelEdit(); localStorage.setItem('cafe_menu', JSON.stringify(getMenu().filter(m=>m.id!==id))); render(); }
+function printStruk(id){ const o=getOrders().find(x=>x.id===id); if(!o) return; const w=window.open('','_blank'); w.document.write(`<html><head><title>Struk ${o.id}</title><style>body{font-family:monospace;max-width:320px;margin:auto;padding:16px} h2{text-align:center} .line{border-top:1px dashed #000;margin:8px 0} table{width:100%;font-size:13px}</style></head><body><h2>${localStorage.getItem('cafe_name')||'CafeBar'}</h2><p style="text-align:center;font-size:12px">Meja ${o.table} • ${o.time}<br>${o.id} • ${o.customer}<br>Pembayaran: ${o.paymentLabel||'Bayar di Kasir'}</p><div class="line"></div><table>${o.items.map(i=>`<tr><td>${i.qty}x ${i.name}</td><td style="text-align:right">Rp ${(i.price*i.qty).toLocaleString('id-ID')}</td></tr>`).join('')}</table><div class="line"></div><table><tr><td><b>Total</b></td><td style="text-align:right"><b>Rp ${o.total.toLocaleString('id-ID')}</b></td></tr></table>${o.note?`<p style="font-size:12px">Catatan: ${o.note}</p>`:''}<div class="line"></div><p style="text-align:center;font-size:11px">Terima kasih • ${o.paymentLabel||''}</p><script>window.print();<\/script></body></html>`); }
+document.getElementById('filterStatus').addEventListener('change', render);
+document.getElementById('filterTable').addEventListener('change', render);
+render(); setInterval(render,1500);
+try{ const bc=new BroadcastChannel('cafe'); bc.onmessage=(e)=>{
+  if(e.data?.order && e.data?.type==='new_order'){
+    let cur=JSON.parse(localStorage.getItem('cafe_orders')||'[]');
+    if(!cur.find(x=>x.id===e.data.order.id)){ cur.unshift(e.data.order); localStorage.setItem('cafe_orders', JSON.stringify(cur)); }
+  }
+  render();
+}; }catch(e){}
+window.addEventListener('storage', (e)=>{ if(e.key==='cafe_orders') render(); });
+// auto request on first click
+document.addEventListener('click', ()=>{ if(Notification && Notification.permission==='default'){ /* wait user enable */ } }, {once:true});
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dapur - CafeQR</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+@media print { .no-print{display:none} }
+</style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen">
+<nav class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 no-print">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <h1 class="font-bold flex items-center gap-2"><i class="fa-solid fa-fire text-orange-500"></i> KITCHEN DISPLAY <span class="text-xs bg-orange-600 px-2 py-1 rounded-full animate-pulse">LIVE</span></h1>
+    <div class="flex gap-2">
+      <a href="history.html" class="px-3 py-1.5 bg-emerald-600 text-white rounded-full text-xs">History</a>
+      <a href="admin.html" class="px-3 py-1.5 bg-white text-slate-900 rounded-full text-xs">Admin</a>
+      <a href="index.html" class="px-3 py-1.5 bg-slate-800 rounded-full text-xs">QR</a>
+      <button onclick="toggleSound()" id="soundBtn" class="px-3 py-1.5 bg-green-600 rounded-full text-xs"><i class="fa-solid fa-volume-high"></i> Sound ON</button>
+    </div>
+  </div>
+</nav>
+
+<div class="max-w-7xl mx-auto px-4 py-4 no-print">
+  <div class="grid grid-cols-3 gap-3 text-center">
+    <div class="bg-amber-600 rounded-2xl p-3"><div id="kPending" class="text-2xl font-bold">0</div><div class="text-xs">ANTRIAN</div></div>
+    <div class="bg-blue-600 rounded-2xl p-3"><div id="kCooking" class="text-2xl font-bold">0</div><div class="text-xs">DIMASAK</div></div>
+    <div class="bg-green-600 rounded-2xl p-3"><div id="kReady" class="text-2xl font-bold">0</div><div class="text-xs">SIAP ANTAR</div></div>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 pb-6 grid md:grid-cols-3 gap-4">
+  <div>
+    <h2 class="font-bold text-amber-400 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-amber-400 rounded-full"></span> ANTRIAN</h2>
+    <div id="colPending" class="space-y-3"></div>
+  </div>
+  <div>
+    <h2 class="font-bold text-blue-400 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full"></span> DIMASAK</h2>
+    <div id="colCooking" class="space-y-3"></div>
+  </div>
+  <div>
+    <h2 class="font-bold text-green-400 mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-green-400 rounded-full"></span> SIAP</h2>
+    <div id="colReady" class="space-y-3"></div>
+  </div>
+</div>
+
+<audio id="kitchenSound" src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_1fb7111783.mp3?filename=positive-notification-95240.mp3" preload="auto"></audio>
+
+<script>
+let soundOn=true;
+function toggleSound(){ soundOn=!soundOn; document.getElementById('soundBtn').innerHTML = soundOn?'<i class="fa-solid fa-volume-high"></i> Sound ON':'<i class="fa-solid fa-volume-xmark"></i> Sound OFF'; document.getElementById('soundBtn').className = soundOn?'px-3 py-1.5 bg-green-600 rounded-full text-xs':'px-3 py-1.5 bg-slate-700 rounded-full text-xs'; }
+function getOrders(){ return JSON.parse(localStorage.getItem('cafe_orders')||'[]'); }
+function save(o){ localStorage.setItem('cafe_orders', JSON.stringify(o)); try{new BroadcastChannel('cafe').postMessage({type:'update'})}catch(e){} }
+
+let lastLen=getOrders().length;
+function render(){
+  const orders=getOrders();
+  document.getElementById('kPending').textContent=orders.filter(o=>o.status==='pending').length;
+  document.getElementById('kCooking').textContent=orders.filter(o=>o.status==='cooking').length;
+  document.getElementById('kReady').textContent=orders.filter(o=>o.status==='ready').length;
+
+  const map = {pending:'colPending', cooking:'colCooking', ready:'colReady'};
+  Object.keys(map).forEach(status=>{
+    const col=document.getElementById(map[status]);
+    const list=orders.filter(o=>o.status===status);
+    if(list.length===0){ col.innerHTML=`<div class="bg-slate-900 border border-dashed border-slate-700 rounded-2xl p-6 text-center text-sm text-slate-500">Tidak ada</div>`; return; }
+    col.innerHTML=list.map(o=>{
+      const elapsed = Math.floor((Date.now()-o.timestamp)/60000);
+      const urgent = elapsed>10 ? 'border-red-500' : elapsed>5 ? 'border-amber-500' : 'border-slate-800';
+      return `
+      <div class="bg-white text-slate-900 rounded-2xl p-4 border-2 ${urgent}">
+        <div class="flex justify-between items-start">
+          <span class="bg-slate-900 text-white text-sm px-3 py-1 rounded-full font-bold">MEJA ${o.table}</span>
+          <span class="text-xs text-slate-500">${elapsed} menit lalu</span>
+        </div>
+        <p class="text-xs font-bold mt-2">${o.id} • ${o.customer} • <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full"><i class="fa-solid ${o.payment==='qris'?'fa-qrcode':o.payment==='transfer'?'fa-building-columns':o.payment==='ewallet'?'fa-wallet':'fa-money-bill-wave'}"></i> ${o.paymentLabel||'Cash'}</span></p>
+        <div class="mt-2 space-y-1">
+          ${o.items.map(i=>`<div class="flex justify-between text-sm font-medium bg-slate-50 px-2 py-1.5 rounded-xl"><span>${i.qty}x ${i.name}</span></div>`).join('')}
+        </div>
+        ${o.note?`<div class="mt-2 bg-red-50 border border-red-200 text-red-700 p-2 rounded-xl text-xs font-bold">!! ${o.note}</div>`:''}
+        <div class="grid grid-cols-2 gap-2 mt-3">
+          ${status==='pending'?`<button onclick="move('${o.id}','cooking')" class="py-2 bg-blue-600 text-white rounded-xl text-sm font-bold">MASAK <i class="fa-solid fa-arrow-right"></i></button><button onclick="move('${o.id}','ready')" class="py-2 bg-slate-100 border rounded-xl text-sm">Langsung Siap</button>`:''}
+          ${status==='cooking'?`<button onclick="move('${o.id}','ready')" class="py-2 bg-green-600 text-white rounded-xl text-sm font-bold">SELESAI <i class="fa-solid fa-check"></i></button><button onclick="move('${o.id}','pending')" class="py-2 bg-white border rounded-xl text-sm">Kembali</button>`:''}
+          ${status==='ready'?`<button onclick="move('${o.id}','done')" class="py-2 bg-slate-900 text-white rounded-xl text-sm font-bold">ANTAR KE MEJA <i class="fa-solid fa-bell-concierge"></i></button><button onclick="move('${o.id}','cooking')" class="py-2 bg-white border rounded-xl text-sm">Kembali</button>`:''}
+        </div>
+        <p class="text-[11px] text-slate-500 mt-2 text-center">${o.time}</p>
+      </div>
+      `;
+    }).join('');
+  });
+
+  if(orders.length>lastLen && soundOn){
+    document.getElementById('kitchenSound').play().catch(()=>{});
+  }
+  lastLen=orders.length;
+}
+function move(id, status){
+  const orders=getOrders();
+  const o=orders.find(x=>x.id===id);
+  if(o){ o.status=status; save(orders); render(); }
+}
+render();
+setInterval(render,1500);
+try{ const bc=new BroadcastChannel('cafe'); bc.onmessage=(e)=>{
+  if(e.data?.order && e.data?.type==='new_order'){
+    let cur=JSON.parse(localStorage.getItem('cafe_orders')||'[]');
+    if(!cur.find(x=>x.id===e.data.order.id)){ cur.unshift(e.data.order); localStorage.setItem('cafe_orders', JSON.stringify(cur)); }
+  }
+  render();
+}; }catch(e){}
+</script>
+</body>
+</html>
