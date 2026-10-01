@@ -28,10 +28,16 @@
       <h2 class="font-bold text-sm flex items-center gap-2"><span class="w-7 h-7 bg-amber-600 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-camera"></i></span> Kamera Scanner</h2>
       <span id="scanStatus" class="text-[11px] font-bold px-2.5 py-1 bg-emerald-600 rounded-full animate-pulse">Kamera Aktif</span>
     </div>
+    <div id="secureWarn" class="hidden mb-3 p-3 bg-amber-500/15 border border-amber-500/40 rounded-xl text-xs text-amber-200 leading-relaxed"><b>Mode HTTP terdeteksi</b> — kamera HP diblokir browser di alamat non-HTTPS. Solusi: buka versi online <b>https://…github.io/cafe/scanner.html</b>, atau pakai <b>Upload Foto QR</b> / Input Manual di bawah.</div>
     <div id="reader" class="rounded-2xl overflow-hidden bg-black min-h-[300px] border border-white/5"></div>
+    <div id="reader-file" class="hidden"></div>
     <div class="grid grid-cols-2 gap-2 mt-3">
       <button onclick="switchCamera()" class="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Ganti Kamera</button>
       <button onclick="toggleTorch()" id="torchBtn" class="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold"><i class="fa-solid fa-lightbulb mr-1"></i> Torch</button>
+    </div>
+    <div class="grid grid-cols-2 gap-2 mt-2">
+      <button onclick="retryCamera()" class="py-2.5 bg-amber-600 hover:bg-amber-700 rounded-xl text-sm font-bold"><i class="fa-solid fa-arrows-rotate mr-1"></i> Muat Ulang Kamera</button>
+      <label class="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold text-center cursor-pointer"><i class="fa-solid fa-image mr-1"></i> Upload Foto QR<input type="file" id="qrFile" accept="image/*" class="hidden" onchange="scanFromFile(this)"></label>
     </div>
     <p class="text-[11px] text-white/40 text-center mt-2">Scan QR • otomatis buka menu</p>
   </div>
@@ -91,10 +97,68 @@ function addHistory(text,status){ const el=document.getElementById('history'); i
 function handleManual(){ const v=document.getElementById('manualInput').value.trim(); if(!v) return alert('Isi kode meja'); onScanSuccess(v); }
 function quickMeja(n){ document.getElementById('manualInput').value=n; handleManual(); }
 function continueScan(){ scanned=false; document.getElementById('resultBox').classList.add('hidden'); document.getElementById('scanStatus').textContent='Kamera Aktif'; document.getElementById('scanStatus').className='text-[11px] font-bold px-2.5 py-1 bg-emerald-600 rounded-full animate-pulse'; }
-async function initScanner(){ try{ html5QrCode=new Html5Qrcode("reader"); cameras=await Html5Qrcode.getCameras(); if(!cameras.length) throw new Error('No camera'); currentCamId=cameras[cameras.length-1].id; await startCam(currentCamId); }catch(err){ document.getElementById('reader').innerHTML=`<div class="p-10 text-center text-white/50"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i><p class="text-sm">Kamera tidak tersedia / butuh HTTPS</p><p class="text-xs mt-1">${err.message}</p></div>`; document.getElementById('scanStatus').textContent='Kamera Off'; document.getElementById('scanStatus').className='text-[11px] font-bold px-2.5 py-1 bg-red-600 rounded-full'; } }
+function setStatus(text, cls){ const s=document.getElementById('scanStatus'); s.textContent=text; s.className='text-[11px] font-bold px-2.5 py-1 rounded-full '+cls; }
+function showCamError(err){
+  const msg=(err && (err.message||err.name||String(err)))||'unknown';
+  let why='Kamera gagal dimulai';
+  if(/NotAllowedError|Permission/i.test(msg+err)) why='Izin kamera DITOLAK — izinkan akses kamera di browser HP lalu Muat Ulang';
+  else if(/NotFoundError|Overconstrained|No camera/i.test(msg)) why='Kamera tidak ditemukan di perangkat ini';
+  else if(/NotReadableError|AbortError|starting video/i.test(msg)) why='Kamera dipakai aplikasi lain — tutup aplikasi kamera lain lalu Muat Ulang';
+  else if(!window.isSecureContext) why='Browser memblokir kamera di alamat HTTP — pakai versi HTTPS online atau Upload Foto QR';
+  document.getElementById('reader').innerHTML=`<div class="p-10 text-center text-white/60"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2 text-amber-400"></i><p class="text-sm font-bold text-white">${why}</p><p class="text-xs mt-1 break-all opacity-70">${msg}</p><button onclick="retryCamera()" class="mt-4 px-6 py-2.5 bg-amber-600 text-white rounded-xl text-sm font-bold">Muat Ulang Kamera</button></div>`;
+  setStatus('Kamera Off','bg-red-600');
+}
+async function initScanner(){
+  document.getElementById('secureWarn').classList.toggle('hidden', !!window.isSecureContext);
+  document.getElementById('reader').innerHTML='<div class="p-10 text-center text-white/50 text-sm">Menyiapkan kamera…</div>';
+  setStatus('Menyiapkan…','bg-slate-600 animate-pulse');
+  try{
+    try{ if(html5QrCode){ await html5QrCode.stop().catch(()=>{}); await html5QrCode.clear().catch(()=>{}); } }catch(e){}
+    html5QrCode=new Html5Qrcode("reader");
+    let started=false, lastErr=null;
+    // Cara 1: pilih kamera belakang dari daftar
+    try{
+      cameras=await Html5Qrcode.getCameras();
+      if(cameras && cameras.length){
+        const back=cameras.find(c=>/back|rear|belakang|environment/i.test(c.label||''))||cameras[cameras.length-1];
+        currentCamId=back.id;
+        await startCam(currentCamId);
+        started=true;
+      }
+    }catch(e){ lastErr=e; }
+    // Cara 2: facingMode environment (tanpa perlu daftar kamera)
+    if(!started){
+      try{
+        await html5QrCode.start({facingMode:"environment"},{fps:15,qrbox:{width:260,height:140}},onScanSuccess,()=>{});
+        started=true;
+      }catch(e){ lastErr=e; }
+    }
+    // Cara 3: kamera apa saja
+    if(!started){
+      try{
+        await html5QrCode.start({facingMode:"user"},{fps:15,qrbox:{width:260,height:140}},onScanSuccess,()=>{});
+        started=true;
+      }catch(e){ lastErr=e; }
+    }
+    if(!started) throw lastErr||new Error('camera unavailable');
+    setStatus('Kamera Aktif','bg-emerald-600 animate-pulse');
+  }catch(err){ showCamError(err); }
+}
+async function retryCamera(){ scanned=false; document.getElementById('resultBox').classList.add('hidden'); await initScanner(); }
+async function scanFromFile(input){
+  const f=input.files && input.files[0]; if(!f) return;
+  showToast('Membaca foto…');
+  try{
+    const tmp=new Html5Qrcode("reader-file");
+    const text=await tmp.scanFile(f, true);
+    try{ await tmp.clear(); }catch(e){}
+    onScanSuccess(text);
+  }catch(e){ showToast('QR tidak terbaca dari foto — coba foto lebih jelas'); }
+  input.value='';
+}
 async function startCam(camId){ const config={fps:15, qrbox:{width:260,height:140}, aspectRatio:1.777, rememberLastUsedCamera:true}; await html5QrCode.start(camId,config,onScanSuccess,()=>{}); }
-async function switchCamera(){ if(cameras.length<2) return showToast('Hanya 1 kamera'); await html5QrCode.stop(); const idx=cameras.findIndex(c=>c.id===currentCamId); const next=cameras[(idx+1)%cameras.length]; currentCamId=next.id; await startCam(currentCamId); showToast('Kamera: '+next.label); }
-async function toggleTorch(){ try{ const cap=html5QrCode.getRunningTrackCapabilities(); if(!cap.torch) return showToast('Torch tidak support'); torchOn=!torchOn; await html5QrCode.applyVideoConstraints({advanced:[{torch:torchOn}]}); document.getElementById('torchBtn').innerHTML=torchOn?'<i class="fa-solid fa-lightbulb"></i> Torch ON':'<i class="fa-solid fa-lightbulb"></i> Torch'; document.getElementById('torchBtn').className=torchOn?'py-2.5 bg-amber-600 text-white rounded-xl text-sm font-semibold':'py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm font-semibold'; }catch(e){ showToast('Torch gagal'); } }
+async function switchCamera(){ try{ if(!html5QrCode || !html5QrCode.isScanning) return showToast('Kamera belum aktif'); if(cameras.length<2) return showToast('Hanya 1 kamera'); await html5QrCode.stop(); const idx=cameras.findIndex(c=>c.id===currentCamId); const next=cameras[(idx+1)%cameras.length]; currentCamId=next.id; await startCam(currentCamId); showToast('Kamera: '+(next.label||'ok')); }catch(e){ showCamError(e); } }
+async function toggleTorch(){ try{ if(!html5QrCode || !html5QrCode.isScanning) return showToast('Kamera belum aktif'); const cap=html5QrCode.getRunningTrackCapabilities(); if(!cap || !cap.torch) return showToast('Torch tidak support'); torchOn=!torchOn; await html5QrCode.applyVideoConstraints({advanced:[{torch:torchOn}]}); document.getElementById('torchBtn').innerHTML=torchOn?'<i class="fa-solid fa-lightbulb"></i> Torch ON':'<i class="fa-solid fa-lightbulb"></i> Torch'; document.getElementById('torchBtn').className=torchOn?'py-2.5 bg-amber-600 text-white rounded-xl text-sm font-semibold':'py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm font-semibold'; }catch(e){ showToast('Torch gagal'); } }
 initScanner(); document.getElementById('manualInput').addEventListener('keydown',e=>{ if(e.key==='Enter') handleManual(); });
 </script>
 </body>

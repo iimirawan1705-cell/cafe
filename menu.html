@@ -159,6 +159,7 @@
         <button onclick="closeScanModal()" class="w-9 h-9 bg-white/10 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="p-5">
+        <div id="secureWarnInline" class="hidden mb-3 p-3 bg-amber-500/15 border border-amber-500/40 rounded-xl text-xs text-amber-200 leading-relaxed">Kamera diblokir di alamat HTTP — buka versi online <b>https://…github.io/cafe/</b> atau ketik nomor meja manual.</div>
         <div id="inlineReader" class="rounded-2xl overflow-hidden bg-black min-h-[260px]"></div>
         <p class="text-xs text-slate-400 text-center mt-2">Arahkan ke QR di meja</p>
         <div class="flex gap-2 mt-3">
@@ -289,7 +290,46 @@ function setManualTable(){ const v=document.getElementById('manualTable').value 
 function clearTable(){ localStorage.removeItem('cafe_table'); location.href='scanner.html'; }
 function inlineManualGo(){ setManualTable(); }
 let inlineScanner=null; let inlineScanned=false;
-function openScanModal(){ document.getElementById('scanModal').classList.remove('hidden'); inlineScanned=false; setTimeout(async()=>{ try{ inlineScanner=new Html5Qrcode("inlineReader"); const cams=await Html5Qrcode.getCameras(); const camId=cams[cams.length-1]?.id||cams[0]?.id; await inlineScanner.start(camId,{fps:12,qrbox:{width:260,height:130}},(text)=>{ if(inlineScanned) return; inlineScanned=true; let parsed=null; if(text.includes('meja=')){ try{ const u=new URL(text); parsed=u.searchParams.get('meja'); }catch(e){} } if(!parsed){ const m=text.match(/(\d+)/); if(m) parsed=m[1]; } if(parsed){ if(navigator.vibrate) navigator.vibrate(200); showToast('Meja '+parsed+' terdeteksi'); setTimeout(()=> location.href='?meja='+parsed,600); } else { showToast('Kode: '+text); inlineScanned=false; } },()=>{});}catch(e){ document.getElementById('inlineReader').innerHTML=`<div class="p-10 text-center text-slate-400 text-sm">Kamera gagal: ${e.message}<br><a href="scanner.html" class="text-amber-400 underline">Buka scanner.html</a></div>`; }},300);}
+function onInlineScan(text){
+  if(inlineScanned) return; inlineScanned=true;
+  let parsed=null;
+  if(text.includes('meja=')){ try{ const u=new URL(text); parsed=u.searchParams.get('meja'); }catch(e){} }
+  if(!parsed){ const m=text.match(/(\d+)/); if(m) parsed=m[1]; }
+  if(parsed){ if(navigator.vibrate) navigator.vibrate(200); showToast('Meja '+parsed+' terdeteksi'); setTimeout(()=> location.href='?meja='+parsed,600); }
+  else { showToast('Kode: '+text); inlineScanned=false; }
+}
+function openScanModal(){
+  document.getElementById('scanModal').classList.remove('hidden');
+  document.getElementById('secureWarnInline').classList.toggle('hidden', !!window.isSecureContext);
+  inlineScanned=false;
+  setTimeout(async()=>{
+    document.getElementById('inlineReader').innerHTML='<div class="p-10 text-center text-slate-400 text-sm">Menyiapkan kamera…</div>';
+    try{
+      try{ if(inlineScanner){ await inlineScanner.stop().catch(()=>{}); await inlineScanner.clear().catch(()=>{}); } }catch(e){}
+      inlineScanner=new Html5Qrcode("inlineReader");
+      let started=false, lastErr=null;
+      try{
+        const cams=await Html5Qrcode.getCameras();
+        if(cams && cams.length){
+          const back=cams.find(c=>/back|rear|belakang|environment/i.test(c.label||''))||cams[cams.length-1];
+          await inlineScanner.start(back.id,{fps:12,qrbox:{width:260,height:130}},onInlineScan,()=>{});
+          started=true;
+        }
+      }catch(e){ lastErr=e; }
+      if(!started){
+        try{ await inlineScanner.start({facingMode:"environment"},{fps:12,qrbox:{width:260,height:130}},onInlineScan,()=>{}); started=true; }
+        catch(e){ lastErr=e; }
+      }
+      if(!started) throw lastErr||new Error('camera unavailable');
+    }catch(e){
+      const msg=e.message||String(e);
+      let why='Kamera gagal dimulai';
+      if(/NotAllowedError|Permission/i.test(msg)) why='Izin kamera ditolak — izinkan di browser lalu tutup & buka lagi';
+      else if(!window.isSecureContext) why='Kamera diblokir di alamat HTTP — pakai versi online HTTPS atau ketik nomor meja';
+      document.getElementById('inlineReader').innerHTML=`<div class="p-10 text-center text-slate-400 text-sm">${why}<br><span class="text-xs opacity-70">${msg}</span><br><a href="scanner.html" class="text-amber-400 underline">Buka scanner.html</a></div>`;
+    }
+  },300);
+}
 async function closeScanModal(){ document.getElementById('scanModal').classList.add('hidden'); try{ if(inlineScanner) await inlineScanner.stop(); inlineScanner=null; }catch(e){} }
 function updateTableUI(){ const label=tableNo?'MEJA '+tableNo:'Belum pilih meja'; document.getElementById('tableBadge').textContent=label; document.querySelectorAll('.tableLabel').forEach(e=>e.textContent=tableNo?'Meja '+tableNo:'Meja -'); document.getElementById('cafeTitle').textContent=localStorage.getItem('cafe_name')||'Kopi Senja Cafe'; }
 updateTableUI();
