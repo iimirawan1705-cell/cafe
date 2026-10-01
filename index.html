@@ -34,7 +34,7 @@
     </div>
     <div class="flex items-center gap-2">
       <a href="scanner.html" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 bg-white border rounded-full text-xs font-semibold hover:bg-slate-50"><i class="fa-solid fa-camera"></i> Scanner</a>
-      <a href="menu.html?meja=1" class="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white rounded-full text-xs font-bold hover:bg-amber-700 shadow-sm">Simulasi Pelanggan</a>
+      <a href="menu.html?meja=1" class="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white rounded-full text-xs font-bold hover:bg-amber-700 shadow-sm">Menu Pelanggan</a>
       <a href="history.html" class="hidden md:inline-flex px-3.5 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold"><i class="fa-solid fa-clock-rotate-left mr-1"></i> History</a>
       <a href="admin.html" class="hidden md:inline-flex px-3.5 py-2 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-black"><i class="fa-solid fa-chart-line mr-1"></i> Admin</a>
       <a href="kitchen.html" class="hidden md:inline-flex px-3.5 py-2 bg-white border rounded-full text-xs font-semibold">Dapur</a>
@@ -106,7 +106,7 @@
           <div class="flex gap-2 items-center text-xs text-amber-900 bg-white rounded-xl p-2 border"><span class="w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center font-black text-xs shrink-0">3</span> Pelanggan scan barcode → pesan langsung jadi</div>
         </div>
         <p class="text-[11px] text-amber-700/70 mt-2 text-center">Tidak perlu aplikasi — cukup kamera HP</p>
-        <a href="scanner.html" class="mt-3 flex items-center justify-center gap-1.5 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-camera"></i> Coba Scan Sekarang</a>
+        <a href="scanner.html" class="mt-3 flex items-center justify-center gap-1.5 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-camera"></i> Scan Barcode Meja</a>
       </div>
     </div>
     <!-- Statistik -->
@@ -226,7 +226,6 @@ function generateAll(){
           <button onclick="printSingle(${i})" class="py-1.5 bg-white border rounded-full text-xs font-semibold">Print 1</button>
           <a href="barcode-permeja.html?meja=${i}" target="_blank" class="text-center py-1.5 bg-amber-600 text-white rounded-full text-xs font-bold">Detail</a>
         </div>
-        <a href="scanner.html" class="mt-1.5 block text-center py-1 rounded-full bg-white border text-[11px] font-semibold text-emerald-700 no-print">Test Scan</a>
       </div>
     `;
     grid.appendChild(card);
