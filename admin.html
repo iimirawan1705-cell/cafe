@@ -185,7 +185,12 @@
 <audio id="notifSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=notification-sound-7062.mp3" preload="auto"></audio>
 <audio id="notifSound2" src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_1fb7111783.mp3?filename=positive-notification-95240.mp3" preload="auto"></audio>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="firebase-config.js"></script>
+<script src="db.js"></script>
 <script>
+window.addEventListener('cafe-sync', ()=>{ try{render();}catch(e){} });
 let soundOn = localStorage.getItem('cafe_sound') !== 'off';
 let notifPermitted = Notification && Notification.permission === 'granted';
 

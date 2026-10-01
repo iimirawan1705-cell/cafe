@@ -72,7 +72,12 @@
   <p class="text-center text-xs text-slate-400 mt-6">History hanya untuk pesanan <b>done (selesai diantar)</b> — pending/cooking/ready tetap di Admin/Dapur</p>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="firebase-config.js"></script>
+<script src="db.js"></script>
 <script>
+window.addEventListener('cafe-sync', ()=>{ try{renderHistory();}catch(e){} });
 function getOrders(){ return JSON.parse(localStorage.getItem('cafe_orders')||'[]'); }
 function payIcon(p){ return p==='qris'?'fa-qrcode':p==='transfer'?'fa-building-columns':p==='ewallet'?'fa-wallet':'fa-money-bill-wave'; }
 

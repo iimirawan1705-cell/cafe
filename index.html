@@ -120,7 +120,8 @@
           <div id="statOmzet" class="text-[13px] font-black">Rp 0</div><div class="text-[11px] opacity-70">Omzet</div>
         </div>
       </div>
-      <button onclick="if(confirm('Hapus semua order & menu?')){localStorage.removeItem('cafe_orders');localStorage.removeItem('cafe_menu');location.reload()}" class="w-full mt-3 py-2 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl text-xs font-semibold">Reset Data Demo</button>
+      <p data-sync-status class="text-[11px] opacity-70 mt-3 text-center">Mode lokal</p>
+      <button onclick="if(confirm('Hapus SEMUA order & menu? Data terhapus permanen di semua perangkat jika Firebase aktif.')){localStorage.removeItem('cafe_orders');localStorage.removeItem('cafe_menu');location.reload()}" class="w-full mt-2 py-2 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl text-xs font-semibold">Hapus Semua Data</button>
     </div>
   </aside>
 
@@ -140,7 +141,13 @@
   </section>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="firebase-config.js"></script>
+<script src="db.js"></script>
 <script>
+window.addEventListener('cafe-sync', ()=>refreshStats());
+window.addEventListener('storage', e=>{ if(e.key==='cafe_orders') refreshStats(); });
 function getAutoBase(){ return location.href.replace('index.html','').replace(/\/$/,'') + '/menu.html'; }
 function checkBaseWarn(){
   const v=document.getElementById('baseUrl').value||'';

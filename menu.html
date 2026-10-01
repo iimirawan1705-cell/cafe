@@ -261,22 +261,14 @@
 <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-3 rounded-full text-sm font-semibold shadow-xl hidden z-50"></div>
 <button onclick="document.getElementById('helpModal').classList.remove('hidden')" class="fixed bottom-6 left-4 w-12 h-12 bg-white border shadow-lg rounded-full flex items-center justify-center text-amber-600 z-40"><i class="fa-solid fa-question"></i></button>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="firebase-config.js"></script>
+<script src="db.js"></script>
 <script>
-const DEFAULT_MENU = [
-  {id:1, name:"Kopi Susu Gula Aren", price:25000, cat:"kopi", img:"https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400", desc:"Espresso + susu + gula aren legit"},
-  {id:2, name:"Americano", price:22000, cat:"kopi", img:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400", desc:"Hot / Ice"},
-  {id:3, name:"Cappuccino", price:28000, cat:"kopi", img:"https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400", desc:"Foam creamy"},
-  {id:4, name:"Matcha Latte", price:30000, cat:"nonkopi", img:"https://images.unsplash.com/photo-1515825838458-f2a94b20105a?w=400", desc:"Premium matcha Jepang"},
-  {id:5, name:"Lychee Tea", price:24000, cat:"nonkopi", img:"https://images.unsplash.com/photo-1544148103-005eec06c04d?w=400", desc:"Teh lychee segar"},
-  {id:6, name:"Nasi Goreng Special", price:35000, cat:"makanan", img:"https://images.unsplash.com/photo-1603133872875-ca2a98a0a862?w=400", desc:"Telur + ayam + kerupuk"},
-  {id:7, name:"Chicken Katsu Curry", price:42000, cat:"makanan", img:"https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400", desc:"Katsu + curry Jepang"},
-  {id:8, name:"Mie Goreng Aceh", price:33000, cat:"makanan", img:"https://images.unsplash.com/photo-1612874742237-6526221588d2?w=400", desc:"Pedas mantap"},
-  {id:9, name:"Kentang Goreng", price:18000, cat:"snack", img:"https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400", desc:"200gr + saus"},
-  {id:10, name:"Roti Bakar Coklat Keju", price:22000, cat:"snack", img:"https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400", desc:"Lumer di mulut"},
-  {id:11, name:"Croissant Butter", price:20000, cat:"snack", img:"https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=400", desc:"Fresh bake"},
-  {id:12, name:"Chocolate Ice", price:26000, cat:"nonkopi", img:"https://images.unsplash.com/photo-1579954115545-a95591f99d71?w=400", desc:"Coklat premium"},
-];
-function getMenu(){ const s=localStorage.getItem('cafe_menu'); if(s) return JSON.parse(s); localStorage.setItem('cafe_menu', JSON.stringify(DEFAULT_MENU)); return DEFAULT_MENU; }
+// TIDAK ADA DATA DEMO — menu mulai kosong, kelola via Admin.
+// Jika Firebase dikonfigurasi, menu tersinkron realtime antar perangkat.
+function getMenu(){ try{ const s=localStorage.getItem('cafe_menu'); return s?JSON.parse(s):[]; }catch(e){ return []; } }
 let menu=getMenu();
 function cartKey(){ return tableNo ? `cafe_cart_${tableNo}` : 'cafe_cart'; }
 function customerKey(){ return tableNo ? `cafe_customer_${tableNo}` : 'cafe_customer'; }
@@ -306,6 +298,8 @@ function renderMenu(){
   const filtered=menu.filter(m=>{ const catOk=filterCat==='all'||m.cat===filterCat; const searchOk=!searchQuery||m.name.toLowerCase().includes(searchQuery)||m.desc.toLowerCase().includes(searchQuery); return catOk&&searchOk; });
   if(countEl) countEl.textContent=filtered.length+' menu';
   grid.innerHTML='';
+  if(!menu.length){ grid.innerHTML='<div class="col-span-full bg-white border-2 border-dashed rounded-[18px] p-10 text-center"><p class="font-bold">Belum ada menu</p><p class="text-xs text-slate-500 mt-1">Tambahkan via Admin → Kelola Menu. Jika Firebase aktif, menu tersinkron otomatis.</p><a href="admin.html" class="inline-block mt-3 px-5 py-2.5 bg-amber-600 text-white rounded-full text-xs font-bold">Buka Admin</a></div>'; return; }
+  if(!filtered.length){ grid.innerHTML='<div class="col-span-full text-center text-sm text-slate-500 py-10">Tidak ada menu cocok.</div>'; return; }
   filtered.forEach(item=>{
     const qty=cart.find(c=>c.id===item.id)?.qty||0;
     const el=document.createElement('div'); el.className='bg-white rounded-[18px] overflow-hidden border shadow-sm flex flex-col hover:shadow-md transition';
@@ -492,6 +486,10 @@ try{ const bc=new BroadcastChannel('cafe'); bc.onmessage=(e)=>{
 window.addEventListener('storage', e=>{
   if(e.key==='cafe_menu'){ menu=getMenu(); renderMenu(); }
   if(e.key==='cafe_orders'){ renderMyOrders(); checkDoneAndClear(); }
+});
+window.addEventListener('cafe-sync', e=>{
+  if(e.detail?.key==='cafe_menu'){ menu=getMenu(); renderMenu(); }
+  if(e.detail?.key==='cafe_orders'){ renderMyOrders(); checkDoneAndClear(); }
 });
 </script>
 </body>
