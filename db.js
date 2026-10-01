@@ -1,11 +1,12 @@
 /* ============================================================
- * CafeBar — Lapisan realtime (Firebase ↔ localStorage)
- * - Tanpa config Firebase: mode LOKAL (perilaku lama, tetap jalan).
- * - Dengan config valid: mirror dua arah ke Realtime Database,
- *   semua perangkat (HP pelanggan, Admin, Dapur) update otomatis.
- * - Struktur di Firebase:
- *     cafe/orders/{orderId} = object order
- *     cafe/menu/{menuId}    = object menu
+ * CafeBar — Lapisan realtime (Server LAN → Firebase → Lokal)
+ * Prioritas sinkronisasi:
+ *  1. SERVER (api.php terjangkau — XAMPP di PC kasir, semua HP
+ *     + admin buka http://IP-PC/... ): polling 2,5 dtk + POST.
+ *     TANPA akun / tanpa konfigurasi apa pun.
+ *  2. FIREBASE (config valid di firebase-config.js): mirror dua
+ *     arah ke Realtime Database — untuk hosting statis.
+ *  3. LOKAL (tidak ada server & Firebase): antar-tab 1 browser.
  * - Di browser tetap array JSON (kompatibel kode lama).
  * ============================================================ */
 (function () {
@@ -17,24 +18,31 @@
   var suppress = false;      // cegah loop tulis-baca
   var pushTimer = null;
   var db = null, ordersRef = null, menuRef = null;
+  var serverMode = false, serverTimer = null, serverBusy = false;
+  var hooked = false;
+  var serverSnapshot = { orders: '[]', menu: '[]' };
 
-  function isConfigured() { return configured && !!db; }
+  function isFirebaseLive() { return configured && !!db; }
+  function isLive() { return serverMode || isFirebaseLive(); }
+  function isConfigured() { return isLive(); }
 
   function setSyncBadge(mode) {
     try {
+      var warn = document.getElementById('localModeWarn');
+      if (warn) warn.classList.toggle('hidden', mode !== 'local');
       document.querySelectorAll('[data-sync-status]').forEach(function (el) {
-        if (mode === 'firebase') {
+        if (mode === 'server') {
+          el.innerHTML = '<span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Realtime: Server';
+        } else if (mode === 'firebase') {
           el.innerHTML = '<span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Realtime: Firebase';
-          el.className = el.className.replace(/bg-[a-z-]+\/\d+|bg-[a-z-]+/g, '').trim();
         } else {
-          el.textContent = 'Mode lokal (isi Firebase config untuk realtime antar-HP)';
+          el.textContent = 'Mode lokal — order HP tidak tersinkron';
         }
       });
       var b = document.getElementById('syncStatus');
       if (b) {
-        if (mode === 'firebase') {
+        if (mode !== 'local') {
           b.innerHTML = '<span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse inline-block"></span> REALTIME';
-          b.className = b.className.replace(/bg-red[^"']*|bg-slate[^"']*/g, '');
         } else {
           b.textContent = 'LOKAL';
         }
@@ -139,21 +147,127 @@
     } catch (e) {}
   }
 
-  // Monkey-patch localStorage.setItem agar setiap save lokal ikut ke cloud
+  // ---- Backend server LAN (api.php) ----
+  function apiPost(payload) {
+    return fetch('api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); });
+  }
+  function detectServer(cb) {
+    try {
+      if (typeof fetch === 'undefined') return cb(false);
+      var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      var done = false;
+      var t = setTimeout(function () { if (!done) { done = true; try { ctl && ctl.abort(); } catch (e) {} cb(false); } }, 4000);
+      fetch('api.php?action=ping', { cache: 'no-store', signal: ctl ? ctl.signal : undefined })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (!done) { done = true; clearTimeout(t); cb(!!(j && j.ok)); } })
+        .catch(function () { if (!done) { done = true; clearTimeout(t); cb(false); } });
+    } catch (e) { cb(false); }
+  }
+  function snapshotLocal() {
+    try {
+      serverSnapshot.orders = localStorage.getItem('cafe_orders') || '[]';
+      serverSnapshot.menu = localStorage.getItem('cafe_menu') || '[]';
+    } catch (e) {}
+  }
+  function scheduleServerPush() {
+    clearTimeout(serverTimer);
+    serverTimer = setTimeout(reconcileUp, 500);
+  }
+  function reconcileUp() {
+    if (!serverMode || serverBusy) return;
+    serverBusy = true;
+    var chain = Promise.resolve();
+    try {
+      var localO = JSON.parse(localStorage.getItem('cafe_orders') || '[]');
+      var snapO = JSON.parse(serverSnapshot.orders || '[]');
+      var snapMap = {};
+      snapO.forEach(function (o) { snapMap[String(o.id)] = o; });
+      var seen = {};
+      localO.forEach(function (o) {
+        seen[String(o.id)] = 1;
+        var s = snapMap[String(o.id)];
+        if (!s || JSON.stringify(s) !== JSON.stringify(o)) {
+          chain = chain.then(function () { return apiPost({ action: 'order_add', order: o }); }).catch(function () {});
+        }
+      });
+      snapO.forEach(function (s) {
+        if (!seen[String(s.id)]) {
+          chain = chain.then(function () { return apiPost({ action: 'order_delete', id: s.id }); }).catch(function () {});
+        }
+      });
+      var localM = localStorage.getItem('cafe_menu') || '[]';
+      if (localM !== serverSnapshot.menu) {
+        chain = chain.then(function () { return apiPost({ action: 'menu_save', menu: JSON.parse(localM) }); }).catch(function () {});
+      }
+    } catch (e) {}
+    chain.then(function () { snapshotLocal(); serverBusy = false; });
+  }
+  function pollServer() {
+    if (!serverMode || serverBusy) return;
+    if (typeof document !== 'undefined' && document.hidden) return;
+    fetch('api.php?action=state', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (st) {
+        if (!st || !st.ok) return;
+        var srvO = JSON.stringify(st.orders || []), srvM = JSON.stringify(st.menu || []);
+        if (srvO !== (localStorage.getItem('cafe_orders') || '[]')) {
+          suppress = true; rawSet('cafe_orders', srvO); suppress = false;
+          notifyChanged('cafe_orders');
+        }
+        if (srvM !== (localStorage.getItem('cafe_menu') || '[]')) {
+          suppress = true; rawSet('cafe_menu', srvM); suppress = false;
+          notifyChanged('cafe_menu');
+        }
+        snapshotLocal();
+      })
+      .catch(function () {});
+  }
+  function initServerMode() {
+    hookStorage();
+    snapshotLocal();
+    // Sinkron awal: server ada isi → pakai server; server kosong → dorong lokal (termasuk seed 12 menu)
+    fetch('api.php?action=state', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (st) {
+        var srvO = JSON.stringify((st && st.orders) || []), srvM = JSON.stringify((st && st.menu) || []);
+        var locO = localStorage.getItem('cafe_orders') || '[]', locM = localStorage.getItem('cafe_menu') || '[]';
+        if (srvO !== '[]') { suppress = true; rawSet('cafe_orders', srvO); suppress = false; notifyChanged('cafe_orders'); }
+        if (srvM !== '[]') { suppress = true; rawSet('cafe_menu', srvM); suppress = false; notifyChanged('cafe_menu'); }
+        snapshotLocal();
+        if (srvO === '[]' || srvM === '[]') { if (locO !== '[]' || locM !== '[]') scheduleServerPush(); }
+      })
+      .catch(function () {});
+    setInterval(pollServer, 2500);
+  }
+
+  // Monkey-patch: setiap save lokal diteruskan ke Server LAN dan/atau Firebase
+  function routePush(key) {
+    if (suppress) return;
+    if (serverMode) {
+      if (key === 'cafe_orders' || key === 'cafe_menu') scheduleServerPush();
+    } else if (isFirebaseLive()) {
+      if (key === 'cafe_orders') pushOrdersToCloud();
+      if (key === 'cafe_menu') pushMenuToCloud();
+    }
+  }
   function hookStorage() {
+    if (hooked) return;
+    hooked = true;
     try {
       var origSet = localStorage.setItem.bind(localStorage);
       localStorage.setItem = function (key, value) {
         origSet(key, value);
-        if (!suppress && isConfigured()) {
-          if (key === 'cafe_orders') pushOrdersToCloud();
-          if (key === 'cafe_menu') pushMenuToCloud();
-        }
+        routePush(key);
       };
       var origRemove = localStorage.removeItem.bind(localStorage);
       localStorage.removeItem = function (key) {
         origRemove(key);
-        if (!suppress && isConfigured()) {
+        if (suppress) return;
+        if (serverMode) {
+          if (key === 'cafe_orders') apiPost({ action: 'orders_clear' }).catch(function () {});
+          if (key === 'cafe_menu') apiPost({ action: 'menu_save', menu: [] }).catch(function () {});
+        } else if (isFirebaseLive()) {
           if (key === 'cafe_orders') { try { ordersRef.set({}); } catch (e) {} }
           if (key === 'cafe_menu') { try { menuRef.set({}); } catch (e) {} }
         }
@@ -194,11 +308,8 @@
     });
   }
 
-  function init() {
-    // Seed menu resmi sekali — berlaku untuk mode lokal maupun Firebase.
-    // (menuRef belum ada saat mode lokal; seedRealMenuOnce aman tanpa cloud.)
-    try { seedRealMenuOnce(); } catch (e) {}
-    if (!configured) { setSyncBadge('local'); return; }
+  function initFirebase() {
+    // Dipanggil hanya bila mode Server LAN tidak tersedia.
     try {
       if (typeof firebase === 'undefined') { setSyncBadge('local'); return; }
       if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(cfg);
@@ -231,10 +342,27 @@
     }
   }
 
+  function init() {
+    try { seedRealMenuOnce(); } catch (e) {}
+    setSyncBadge('local');
+    // Prioritas 1: Server LAN (api.php) — tanpa akun apa pun.
+    detectServer(function (found) {
+      if (found) {
+        serverMode = true;
+        try { initServerMode(); } catch (e) { serverMode = false; setSyncBadge('local'); return; }
+        setSyncBadge('server');
+        return;
+      }
+      // Prioritas 2: Firebase (hosting statis).
+      if (!configured) { setSyncBadge('local'); return; }
+      initFirebase();
+    });
+  }
+
   // Expose untuk debug / tombol status
   window.CafeDB = {
-    isConfigured: function () { return configured; },
-    isLive: isConfigured,
+    isConfigured: function () { return isLive(); },
+    isLive: isLive,
     init: init
   };
 
