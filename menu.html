@@ -266,7 +266,7 @@
 <script src="firebase-config.js"></script>
 <script src="db.js"></script>
 <script>
-// TIDAK ADA DATA DEMO — menu mulai kosong, kelola via Admin.
+// 12 MENU RESMI di-seed sekali via db.js (REAL_MENU) — kelola via Admin.
 // Jika Firebase dikonfigurasi, menu tersinkron realtime antar perangkat.
 function getMenu(){ try{ const s=localStorage.getItem('cafe_menu'); return s?JSON.parse(s):[]; }catch(e){ return []; } }
 let menu=getMenu();

@@ -102,6 +102,43 @@
     } catch (e) {}
   }
 
+  // Menu resmi cafe (12 item). Di-seed SEKALI ke perangkat yang
+  // belum pernah punya menu — tetap bisa diubah via Admin.
+  var MENU_SEED_KEY = 'cafe_menu_seed_v1';
+  var REAL_MENU = [
+    {id:1, name:"Kopi Susu Gula Aren", price:25000, cat:"kopi", img:"https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400", desc:"Espresso + susu + gula aren legit"},
+    {id:2, name:"Americano", price:22000, cat:"kopi", img:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400", desc:"Hot / Ice"},
+    {id:3, name:"Cappuccino", price:28000, cat:"kopi", img:"https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400", desc:"Foam creamy"},
+    {id:4, name:"Matcha Latte", price:30000, cat:"nonkopi", img:"https://images.unsplash.com/photo-1515825838458-f2a94b20105a?w=400", desc:"Premium matcha Jepang"},
+    {id:5, name:"Lychee Tea", price:24000, cat:"nonkopi", img:"https://images.unsplash.com/photo-1544148103-005eec06c04d?w=400", desc:"Teh lychee segar"},
+    {id:6, name:"Chocolate Ice", price:26000, cat:"nonkopi", img:"https://images.unsplash.com/photo-1579954115545-a95591f99d71?w=400", desc:"Coklat premium"},
+    {id:7, name:"Nasi Goreng Special", price:35000, cat:"makanan", img:"https://images.unsplash.com/photo-1603133872875-ca2a98a0a862?w=400", desc:"Telur + ayam + kerupuk"},
+    {id:8, name:"Chicken Katsu Curry", price:42000, cat:"makanan", img:"https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400", desc:"Katsu + curry Jepang"},
+    {id:9, name:"Mie Goreng Aceh", price:33000, cat:"makanan", img:"https://images.unsplash.com/photo-1612874742237-6526221588d2?w=400", desc:"Pedas mantap"},
+    {id:10, name:"Kentang Goreng", price:18000, cat:"snack", img:"https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400", desc:"200gr + saus"},
+    {id:11, name:"Roti Bakar Coklat Keju", price:22000, cat:"snack", img:"https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400", desc:"Lumer di mulut"},
+    {id:12, name:"Croissant Butter", price:20000, cat:"snack", img:"https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=400", desc:"Fresh bake"}
+  ];
+  function rawSet(key, value) {
+    try { Storage.prototype.setItem.call(localStorage, key, value); }
+    catch (e) { try { localStorage.setItem(key, value); } catch (e2) {} }
+  }
+  function seedRealMenuOnce() {
+    try {
+      if (localStorage.getItem(MENU_SEED_KEY)) return;
+      var cur = null;
+      try { cur = JSON.parse(localStorage.getItem('cafe_menu') || 'null'); } catch (e) { cur = null; }
+      if (!cur || !cur.length) {
+        suppress = true;
+        rawSet('cafe_menu', JSON.stringify(REAL_MENU));
+        suppress = false;
+        if (isConfigured() && menuRef) { try { menuRef.set(arrToMap(REAL_MENU, 'id')); } catch (e) {} }
+        notifyChanged('cafe_menu');
+      }
+      rawSet(MENU_SEED_KEY, '1');
+    } catch (e) {}
+  }
+
   // Monkey-patch localStorage.setItem agar setiap save lokal ikut ke cloud
   function hookStorage() {
     try {
@@ -130,10 +167,11 @@
       try {
         var arr = mapToOrders(snap.val() || {});
         var local = localStorage.getItem('cafe_orders');
+        var localArr = []; try { localArr = JSON.parse(local || '[]'); } catch (e) {}
+        if (!arr.length && localArr.length) { pushOrdersToCloud(); return; } // cloud kosong → dorong lokal
         if (JSON.stringify(arr) !== local) {
           suppress = true;
-          try { Storage.prototype.setItem.call(localStorage, 'cafe_orders', JSON.stringify(arr)); }
-          catch (e) { localStorage.setItem('cafe_orders', JSON.stringify(arr)); }
+          rawSet('cafe_orders', JSON.stringify(arr));
           suppress = false;
           notifyChanged('cafe_orders');
         } else if (suppress) { suppress = false; }
@@ -144,10 +182,11 @@
       try {
         var arr = mapToMenu(snap.val() || {});
         var local = localStorage.getItem('cafe_menu');
+        var localArr = []; try { localArr = JSON.parse(local || '[]'); } catch (e) {}
+        if (!arr.length && localArr.length) { pushMenuToCloud(); return; } // cloud kosong → dorong lokal
         if (JSON.stringify(arr) !== local) {
           suppress = true;
-          try { Storage.prototype.setItem.call(localStorage, 'cafe_menu', JSON.stringify(arr)); }
-          catch (e) {}
+          rawSet('cafe_menu', JSON.stringify(arr));
           suppress = false;
           notifyChanged('cafe_menu');
         } else if (suppress) { suppress = false; }
@@ -156,6 +195,9 @@
   }
 
   function init() {
+    // Seed menu resmi sekali — berlaku untuk mode lokal maupun Firebase.
+    // (menuRef belum ada saat mode lokal; seedRealMenuOnce aman tanpa cloud.)
+    try { seedRealMenuOnce(); } catch (e) {}
     if (!configured) { setSyncBadge('local'); return; }
     try {
       if (typeof firebase === 'undefined') { setSyncBadge('local'); return; }
@@ -164,6 +206,7 @@
       ordersRef = db.ref('cafe/orders');
       menuRef = db.ref('cafe/menu');
       hookStorage();
+      try { seedRealMenuOnce(); } catch (e) {}
       pullInitialThenListen();
       // Jika cloud kosong tapi lokal ada → dorong lokal ke cloud (first writer)
       setTimeout(function () {
