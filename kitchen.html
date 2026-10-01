@@ -23,6 +23,13 @@
   </div>
 </nav>
 
+<div id="localModeWarn" class="hidden max-w-7xl mx-auto px-4 pt-4 no-print">
+  <div class="bg-red-500/15 border-2 border-red-500 rounded-xl px-4 py-3 flex items-center gap-3">
+    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+    <p class="text-xs text-red-200 leading-relaxed"><b>MODE LOKAL — order dari HP tidak akan masuk ke sini.</b> Isi <span class="font-mono">firebase-config.js</span> agar realtime.</p>
+  </div>
+</div>
+
 <div class="max-w-7xl mx-auto px-4 py-4 no-print">
   <div class="grid grid-cols-3 gap-3 text-center">
     <div class="bg-amber-600 rounded-2xl p-3"><div id="kPending" class="text-2xl font-bold">0</div><div class="text-xs">ANTRIAN</div></div>
@@ -54,6 +61,7 @@
 <script src="db.js"></script>
 <script>
 window.addEventListener('cafe-sync', ()=>{ try{render();}catch(e){} });
+try{ var _live=!!(window.CafeDB&&window.CafeDB.isConfigured&&window.CafeDB.isConfigured()); document.getElementById('localModeWarn').classList.toggle('hidden', _live); }catch(e){}
 let soundOn=true;
 function toggleSound(){ soundOn=!soundOn; document.getElementById('soundBtn').innerHTML = soundOn?'<i class="fa-solid fa-volume-high"></i> Sound ON':'<i class="fa-solid fa-volume-xmark"></i> Sound OFF'; document.getElementById('soundBtn').className = soundOn?'px-3 py-1.5 bg-green-600 rounded-full text-xs':'px-3 py-1.5 bg-slate-700 rounded-full text-xs'; }
 function getOrders(){ return JSON.parse(localStorage.getItem('cafe_orders')||'[]'); }
